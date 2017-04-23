@@ -1,0 +1,8 @@
+#ifndef IRON_BALLS_TOUCHINPUTEVENT_H
+#define IRON_BALLS_TOUCHINPUTEVENT_H
+
+struct TouchInputEvent {
+
+};
+
+#endif //IRON_BALLS_TOUCHINPUTEVENT_H

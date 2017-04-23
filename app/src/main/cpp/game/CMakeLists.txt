@@ -1,0 +1,5 @@
+set(GAME_SRC 	${CMAKE_CURRENT_SOURCE_DIR}/Game.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/Cube.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/Sphere.cpp
+				PARENT_SCOPE
+    )
