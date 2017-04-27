@@ -1,7 +1,3 @@
-//
-// Created by Oleg on 6/28/2016.
-//
-
 #ifndef IRON_BALLS_CUBE_H
 #define IRON_BALLS_CUBE_H
 #include "../core/Geometry.h"

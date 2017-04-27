@@ -178,6 +178,7 @@ void Game::configureOpenGL() {
     AndroidGame::configureOpenGL();
 
     // FIXME: hardcoded path
+    // TODO: move to class, free buffer memory in destructor
     char* actorVertexShader = readAsset("shaders/actor.vert");
     char* actorFragmentShader = readAsset("shaders/actor.frag");
 
@@ -244,7 +245,11 @@ char* Game::readAsset(const std::string& path) {
         LOGI("Allocation error!");
         return nullptr;
     }
-    AAsset_read (asset, buffer, length);
+    auto bytesRead = AAsset_read (asset, buffer, length);
+    if (bytesRead != length) {
+        LOGI("Read asset bytes error!");
+        return nullptr;
+    }
     // fix the string to be zero-terminated
     buffer[length] = 0;
     AAsset_close(asset);
