@@ -25,14 +25,10 @@ protected:
     GLuint m_fragmentShaderId;
     GLuint m_programId;
     GLint m_mvpMatrixLocation;
-    GLint m_modelMatrixLocation;
     GLint m_positionLocation;
-    GLint m_normalLocation;
+    GLint m_colorLocation;
 
     Geometry* m_renderTarget;
-    DirectionalLight m_light;
-    DirectionalLightLocation m_lightLocation;
-
 private:
     GLuint loadShader(GLenum shaderType, const char* pSource);
 };

@@ -3,7 +3,7 @@
 
 #include <string>
 #include <android/asset_manager.h>
-#include "common.h"
+#include "../core/common.h"
 #include "../core/Geometry.h"
 #include "../core/Shader.h"
 

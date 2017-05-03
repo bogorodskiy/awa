@@ -65,7 +65,7 @@ void AndroidGame::startGameLoop() {
             float deltaTime = getCurrentTime() - m_lastTime;
             m_lastTime = getCurrentTime();
             if (deltaTime > MAX_DELTA_TIME) {
-                LOGD("Delta time %f", deltaTime);
+                LOGD("Delta time > max delta, %f", deltaTime);
             }
             deltaTime = (deltaTime < 0.0f) ? 0.0f : (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
             update(deltaTime);

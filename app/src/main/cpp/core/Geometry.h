@@ -17,8 +17,10 @@ public:
     int getVerticesStride();
     int getNormalsStride();
 
-    GLenum getPrimitive();
-
+    virtual GLenum getPrimitive();
+    void setPrimitive(GLenum primitive);
+    glm::vec4* getColor();
+    void setColor(float r, float g, float b, float a);
     void setVertices(GLfloat* data, int numVertices, int stride);
     void setIndices(GLushort* data, int size);
     void setNormals(GLfloat* data, int numNormals, int stride);
@@ -32,6 +34,8 @@ public:
 
 private:
     GLuint m_vbo;
+    glm::vec4 m_color;
+
     uint m_numVertices;
     GLenum m_primitive;
     int m_verticesStride;

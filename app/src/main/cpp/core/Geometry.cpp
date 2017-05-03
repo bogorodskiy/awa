@@ -3,8 +3,7 @@
 Geometry::Geometry():
         m_vbo(0),
         m_numVertices(0),
-       // m_primitive(GL_TRIANGLES),
-        m_primitive(GL_LINES),
+        m_primitive(GL_TRIANGLES),
         m_verticesStride(0),
         m_ibo(0),
         m_numIndices(0),
@@ -12,6 +11,17 @@ Geometry::Geometry():
         m_nbo(0),
         m_normalsStride(0)
 {
+}
+
+glm::vec4* Geometry::getColor() {
+    return &m_color;
+}
+
+void Geometry::setColor(float r, float g, float b, float a) {
+    m_color.r = r;
+    m_color.g = g;
+    m_color.b = b;
+    m_color.a = a;
 }
 
 uint Geometry::getNumVertices() {
@@ -36,6 +46,10 @@ int Geometry::getNormalsStride() {
 
 GLenum Geometry::getPrimitive() {
     return m_primitive;
+}
+
+void Geometry::setPrimitive(GLenum primitive) {
+    m_primitive = primitive;
 }
 
 void Geometry::setVertices(GLfloat* data, int numVertices, int stride) {

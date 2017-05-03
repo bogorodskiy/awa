@@ -1,6 +1,6 @@
 #include "Game.h"
-#include "Sphere.h"
-#include "Cube.h"
+#include "geometry/Sphere.h"
+#include "geometry/Cube.h"
 #include "PxPhysics.h"
 #include "PxPhysicsAPI.h"
 
@@ -28,9 +28,8 @@ void Game::initLevel()
     }
 
     m_initialized = true;
-    //m_ball = std::make_unique<GameObject>(0);
-    //m_ball->setPosition(0.0f, 0.0f, 0.0f);
-
+    m_ball = std::make_unique<GameObject>(0);
+    m_ball->setPosition(0.0f, 0.0f, 0.0f);
     //m_inputSystem.initialize(&inputTouchLayer);
     //m_inputSystem.addEntity(m_ball.get());
 }
@@ -164,14 +163,9 @@ void Game::update(float deltaTime) {
 
     }
     //m_inputSystem.update(deltaTime);
-   // m_ball->rotate(glm::vec3(0.0f, 1.0f, 0.0f), objectRotation);
+    //m_ball->rotate(glm::vec3(0.0f, 1.0f, 0.0f);
     //m_ball->setRotation(0.0, 0.0, objectRotation);
     //m_ball->updateModelMatrix();
-
-    //glm::vec3 camPositionVector(0.0f, 0.0f, 2.0f);
-    //glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
-    //glm::vec3 camDirectionVector(0.0f, 0.0f, -1.0f);
-    //m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
 }
 
 void Game::configureOpenGL() {
@@ -179,33 +173,67 @@ void Game::configureOpenGL() {
 
     // FIXME: hardcoded path
     // TODO: move to class, free buffer memory in destructor
-    char* actorVertexShader = readAsset("shaders/actor.vert");
-    char* actorFragmentShader = readAsset("shaders/actor.frag");
+    char* vertexShader = readAsset("shaders/debug.vert");
+    char* fragmentShader = readAsset("shaders/debug.frag");
 
-    if (actorVertexShader == nullptr || actorFragmentShader == nullptr) {
-        LOGI("Load actor shader failed!");
+    if (vertexShader == nullptr || fragmentShader == nullptr) {
+        LOGI("Load shader failed!");
     }
-    m_shader.compile(actorVertexShader, actorFragmentShader);
+    m_shader.compile(vertexShader, fragmentShader);
 
-    free(actorVertexShader);
-    free(actorFragmentShader);
+    free(vertexShader);
+    free(fragmentShader);
 
     // TODO make geometry independent from opengl or init opengl before gameloop
-    //m_ball->setGeometry(std::make_unique<Cube>());
+    std::unique_ptr<Geometry> geometry = std::make_unique<Sphere>();
+    geometry->setPrimitive(GL_LINES);
+    geometry->setColor(1.0f, 1.0f, 0.0f, 1.0f);
+    m_ball->setGeometry(std::move(geometry));
+    m_ball->setPosition(0.0f, 0.0f, -2.0f);
+
+    m_xAxis.setPoints(glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 0.0f);
+
+    m_yAxis.setPoints(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 0.0f);
+
+    m_zAxis.setPoints(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 0.0f);
 }
 
 void Game::render() {
     AndroidGame::render();
 
-    //auto modelMatrix = m_viewMatrix * m_ball->getModelMatrix();
-    //auto modelMatrix = m_ball->getModelMatrix();
-    //auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+    glm::vec3 camPositionVector(0.0f, 0.0f, 2.0f);
+    glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
+    glm::vec3 camDirectionVector(0.0f, 0.0f, -1.0f);
+    m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
 
-    //m_shader.bind();
-    //m_shader.beginRender(m_ball->getGeometry());
-    //m_shader.render(&mvpMatrix, &modelMatrix);
-    //m_shader.endRender();
-    //m_shader.unbind();
+    auto modelMatrix = m_ball->getModelMatrix();
+    auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+    m_shader.bind();
+
+    // ball
+    m_shader.beginRender(m_ball->getGeometry());
+    m_shader.render(&mvpMatrix, &modelMatrix);
+    m_shader.endRender();
+
+    // debug
+    auto identityMatrix = glm::mat4(1.0);
+    mvpMatrix = m_projectionMatrix * m_viewMatrix;
+    m_shader.beginRender(&m_xAxis);
+    m_shader.render(&mvpMatrix, &identityMatrix);
+    m_shader.endRender();
+
+    m_shader.beginRender(&m_yAxis);
+    m_shader.render(&mvpMatrix, &identityMatrix);
+    m_shader.endRender();
+
+    m_shader.beginRender(&m_zAxis);
+    m_shader.render(&mvpMatrix, &identityMatrix);
+    m_shader.endRender();
+
+    m_shader.unbind();
 }
 
 void Game::drawAxis(int x, int y, int z) {

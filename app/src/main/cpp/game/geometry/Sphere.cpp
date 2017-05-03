@@ -1,21 +1,21 @@
 #include "Sphere.h"
 
 Sphere::Sphere() : Geometry::Geometry(),
-                   m_pVertices(nullptr),
-                   m_pNormals(nullptr),
-                   m_pIndices(nullptr)
+                   m_vertices(nullptr),
+                   m_normals(nullptr),
+                   m_indices(nullptr)
     {
     float radius = 0.5;
     uint latitudeBands = 30;
     uint longitudeBands = 30;
     int index = 0;
     uint numVertices = (latitudeBands + 1) * (longitudeBands + 1);
-    m_pVertices = new GLfloat[numVertices * 3];
+    m_vertices = new GLfloat[numVertices * 3];
 
     uint numIndices = (latitudeBands + 1) * (longitudeBands + 1) * 6;
-    m_pIndices = new GLushort[numIndices];
+    m_indices = new GLushort[numIndices];
 
-    m_pNormals = new GLfloat[numVertices * 3];
+    m_normals = new GLfloat[numVertices * 3];
 
     for (int latNumber = 0; latNumber <= latitudeBands; latNumber++) {
         double theta = latNumber * M_PI / (double)latitudeBands;
@@ -30,16 +30,16 @@ Sphere::Sphere() : Geometry::Geometry(),
             GLfloat y = (GLfloat)(cosTheta);
             GLfloat z = (GLfloat)(sinPhi * sinTheta);
 
-            m_pVertices[index] = x * radius;
-            m_pNormals[index] = x;
+            m_vertices[index] = x * radius;
+            m_normals[index] = x;
             index++;
 
-            m_pVertices[index] = y * radius;
-            m_pNormals[index] = y;
+            m_vertices[index] = y * radius;
+            m_normals[index] = y;
             index++;
 
-            m_pVertices[index] = z * radius;
-            m_pNormals[index] = z;
+            m_vertices[index] = z * radius;
+            m_normals[index] = z;
             index++;
         }
     }
@@ -49,29 +49,29 @@ Sphere::Sphere() : Geometry::Geometry(),
         for (int longNumber = 0; longNumber <= longitudeBands; longNumber++) {
             uint first = (uint)(latNumber * (longitudeBands + 1)) + longNumber;
             uint second = first + longitudeBands + 1;
-            m_pIndices[index] = (GLushort)first;
+            m_indices[index] = (GLushort)first;
             index++;
-            m_pIndices[index] = (GLushort)second;
+            m_indices[index] = (GLushort)second;
             index++;
-            m_pIndices[index] = (GLushort)(first + 1);
+            m_indices[index] = (GLushort)(first + 1);
             index++;
 
-            m_pIndices[index] = (GLushort)second;
+            m_indices[index] = (GLushort)second;
             index++;
-            m_pIndices[index] = (GLushort)(second + 1);
+            m_indices[index] = (GLushort)(second + 1);
             index++;
-            m_pIndices[index] = (GLushort)(first + 1);
+            m_indices[index] = (GLushort)(first + 1);
             index++;
         }
     }
 
-    setVertices(m_pVertices, numVertices, 3 * sizeof(GLfloat));
-    setIndices(m_pIndices, numIndices * 3 * sizeof(GLushort));
-    setNormals(m_pNormals, numVertices, 3 * sizeof(GLfloat));
+    setVertices(m_vertices, numVertices, 3 * sizeof(GLfloat));
+    setIndices(m_indices, numIndices * 3 * sizeof(GLushort));
+    setNormals(m_normals, numVertices, 3 * sizeof(GLfloat));
 }
 
 Sphere::~Sphere() {
-    delete [] m_pVertices;
-    delete [] m_pIndices;
-    delete [] m_pNormals;
+    delete [] m_vertices;
+    delete [] m_indices;
+    delete [] m_normals;
 }

@@ -1,4 +1,3 @@
-#include "Renderer.h
 #include "Renderer.h"
 
 Renderer::Renderer(AAssetManager* assetManager):m_assetManager(assetManager) {
@@ -15,7 +14,9 @@ void Renderer::renderActor(Geometry* renderTarget, glm::mat4* mvpMatrix, glm::ma
 }
 
 void Renderer::renderDebug(Geometry* renderTarget, glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
+    renderTarget->bindVertexBuffer();
 
+    renderTarget->unbindVertexBuffer();
 }
 
 void Renderer::loadAndCompileShader(Shader* shader, const std::string& name) {

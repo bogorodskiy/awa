@@ -7,6 +7,7 @@
 #include "../core/Shader.h"
 #include "../core/AndroidGame.h"
 #include "../core/input/TouchLayer.h"
+#include "geometry/Line.h"
 #include "PxPhysicsAPI.h"
 
 class Game : public AndroidGame {
@@ -27,6 +28,11 @@ private:
     int m_screenWidth;
     int m_screenHeight;
     bool m_initialized;
+
+    // debug
+    Line m_xAxis;
+    Line m_yAxis;
+    Line m_zAxis;
 
     InputSystem m_inputSystem;
     void drawAxis(int x, int y, int z);

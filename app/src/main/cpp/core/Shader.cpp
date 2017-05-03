@@ -5,7 +5,6 @@ Shader::Shader():
         m_fragmentShaderId(0),
         m_programId(-1),
         m_mvpMatrixLocation(-1),
-        m_modelMatrixLocation(-1),
         m_positionLocation(-1),
         m_renderTarget(nullptr) {
 
@@ -54,37 +53,16 @@ void Shader::compile(const char* vertexShader, const char* fragmentShader) {
         LOGE("Couldn't get shader's mvp matrix location");
         return;
     }
-    m_modelMatrixLocation = glGetUniformLocation(m_programId, "u_worldMatrix");
-    if (m_modelMatrixLocation < 0) {
-        LOGE("Couldn't get shader's world matrix location");
-        return;
-    }
     m_positionLocation = glGetAttribLocation(m_programId, "a_position");
     if (m_positionLocation < 0) {
         LOGE("Couldn't get shader's position location");
         return;
     }
-    m_normalLocation = glGetAttribLocation(m_programId, "a_normal");
-    if (m_normalLocation < 0) {
-        LOGE("Couldn't get shader's normal location");
+    m_colorLocation = glGetUniformLocation(m_programId, "u_color");
+    if (m_colorLocation < 0) {
+        LOGE("Couldn't get shader's color location");
         return;
     }
-
-    m_lightLocation.color = glGetUniformLocation(m_programId, "u_directionalLight.color");
-    m_lightLocation.direction = glGetUniformLocation(m_programId, "u_directionalLight.direction");
-    m_lightLocation.diffuseIntensity = glGetUniformLocation(m_programId, "u_directionalLight.diffuseIntensity");
-
-    if (m_lightLocation.color == 0xFFFFFFFF ||
-        m_lightLocation.diffuseIntensity == 0xFFFFFFFF ||
-        m_lightLocation.direction == 0xFFFFFFFF) {
-        LOGE("Couldn't get light property location");
-        return;
-    }
-
-    // TODO move
-    m_light.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    m_light.diffuseIntensity = 0.75f;
-    m_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
 
     LOGD("Shader compilation successfully finished");
     unbind();
@@ -134,10 +112,6 @@ void Shader::beginRender(Geometry* renderTarget) {
     m_renderTarget->bindVertexBuffer();
     glVertexAttribPointer(m_positionLocation, 3, GL_FLOAT, GL_FALSE, renderTarget->getVerticesStride(), 0);
     glEnableVertexAttribArray(m_positionLocation);
-
-    glUniform3f(m_lightLocation.color, m_light.color.x, m_light.color.y, m_light.color.z);
-    glUniform3f(m_lightLocation.direction, m_light.direction.x, m_light.direction.y, m_light.direction.z);
-    glUniform1f(m_lightLocation.diffuseIntensity, m_light.diffuseIntensity);
 }
 
 void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
@@ -146,27 +120,14 @@ void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
         return;
     }
 
-    // TODO optimize
-    glm::mat3 model3x3Matrix;
-    model3x3Matrix[0][0] = (*modelMatrix)[0][0];
-    model3x3Matrix[0][1] = (*modelMatrix)[0][1];
-    model3x3Matrix[0][2] = (*modelMatrix)[0][2];
-
-    model3x3Matrix[1][0] = (*modelMatrix)[1][0];
-    model3x3Matrix[1][1] = (*modelMatrix)[1][1];
-    model3x3Matrix[1][2] = (*modelMatrix)[1][2];
-
-    model3x3Matrix[2][0] = (*modelMatrix)[2][0];
-    model3x3Matrix[2][1] = (*modelMatrix)[2][1];
-    model3x3Matrix[2][2] = (*modelMatrix)[2][2];
-
-    model3x3Matrix = glm::transpose(glm::inverse(model3x3Matrix));
+    // TODO optimize, разобраться зачем
+    //glm::mat3 model3x3Matrix = glm::mat3(*modelMatrix);
+    //model3x3Matrix = glm::transpose(glm::inverse(model3x3Matrix));
     glUniformMatrix4fv(m_mvpMatrixLocation, 1, GL_FALSE, glm::value_ptr(*mvpMatrix));
-    glUniformMatrix3fv(m_modelMatrixLocation, 1, GL_FALSE, glm::value_ptr(model3x3Matrix));
+    // GLint location, GLsizei count, const GLfloat* v
+    glUniform4fv(m_colorLocation, 1, glm::value_ptr(*m_renderTarget->getColor()));
 
     m_renderTarget->bindNormalBuffer();
-    glVertexAttribPointer(m_normalLocation, 3, GL_FLOAT, GL_FALSE, m_renderTarget->getNormalsStride(), 0);
-    glEnableVertexAttribArray(m_normalLocation);
     m_renderTarget->unbindNormalBuffer();
 
     m_renderTarget->bindIndexBuffer();

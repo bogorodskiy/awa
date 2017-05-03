@@ -1,6 +1,6 @@
 #ifndef IRON_BALLS_CUBE_H
 #define IRON_BALLS_CUBE_H
-#include "../core/Geometry.h"
+#include "../../core/Geometry.h"
 #include <vector>
 
 class Cube : public Geometry {
