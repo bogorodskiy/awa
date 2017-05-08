@@ -51,6 +51,7 @@ private:
     void drawActor(physx::PxRigidActor* actor);
     void drawShape(physx::PxShape* shape, physx::PxRigidActor* actor);
     void drawBox(physx::PxShape* shape, physx::PxRigidActor* actor);
+    void getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat);
 
     // TODO: create file manager
     char* readAsset(const std::string& path);

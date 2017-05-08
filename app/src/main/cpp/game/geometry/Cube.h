@@ -5,8 +5,9 @@
 
 class Cube : public Geometry {
 public:
-    Cube();
+    Cube(float size);
 private:
+    float m_size;
     std::vector<GLfloat> m_vertices;
     std::vector<GLushort> m_indices;
     std::vector<GLfloat> m_normals;

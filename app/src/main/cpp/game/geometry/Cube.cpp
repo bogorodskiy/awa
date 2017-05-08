@@ -1,6 +1,8 @@
 #include "Cube.h"
 
-Cube::Cube() : Geometry::Geometry()
+Cube::Cube(float size) : 
+        Geometry::Geometry(),
+        m_size(size)
 {
     initVertices();
     initIndices();
@@ -14,35 +16,35 @@ Cube::Cube() : Geometry::Geometry()
 void Cube::initVertices() {
     m_vertices = {
             // front
-            -1.0f, -1.0f,  1.0f,
-             1.0f, -1.0f,  1.0f,
-             1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
+            -m_size, -m_size,  m_size,
+             m_size, -m_size,  m_size,
+             m_size,  m_size,  m_size,
+            -m_size,  m_size,  m_size,
             // top
-            -1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-             1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
+            -m_size,  m_size,  m_size,
+            m_size,  m_size,  m_size,
+             m_size,  m_size, -m_size,
+            -m_size,  m_size, -m_size,
             // back
-             1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-             1.0f,  1.0f, -1.0f,
+             m_size, -m_size, -m_size,
+            -m_size, -m_size, -m_size,
+            -m_size,  m_size, -m_size,
+             m_size,  m_size, -m_size,
             // bottom
-            -1.0f, -1.0f, -1.0f,
-             1.0f, -1.0f, -1.0f,
-             1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
+            -m_size, -m_size, -m_size,
+             m_size, -m_size, -m_size,
+             m_size, -m_size,  m_size,
+            -m_size, -m_size,  m_size,
             // left
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
+            -m_size, -m_size, -m_size,
+            -m_size, -m_size,  m_size,
+            -m_size,  m_size,  m_size,
+            -m_size,  m_size, -m_size,
             // right
-            1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f,
+            m_size, -m_size,  m_size,
+            m_size, -m_size, -m_size,
+            m_size,  m_size, -m_size,
+            m_size,  m_size,  m_size,
     };
 }
 
@@ -72,34 +74,34 @@ void Cube::initIndices() {
 void Cube::initNormals(){
     m_normals = {
             // front
-            -1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
+            -m_size, -m_size,  m_size,
+            m_size, -m_size,  m_size,
+            m_size,  m_size,  m_size,
+            -m_size,  m_size,  m_size,
             // top
-            -1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f,  1.0f,
-            1.0f,  1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
+            -m_size,  m_size,  m_size,
+            m_size,  m_size,  m_size,
+            m_size,  m_size, -m_size,
+            -m_size,  m_size, -m_size,
             // back
-            1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
+            m_size, -m_size, -m_size,
+            -m_size, -m_size, -m_size,
+            -m_size,  m_size, -m_size,
+            m_size,  m_size, -m_size,
             // bottom
-            -1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f,
-            -1.0f, -1.0f,  1.0f,
+            -m_size, -m_size, -m_size,
+            m_size, -m_size, -m_size,
+            m_size, -m_size,  m_size,
+            -m_size, -m_size,  m_size,
             // left
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f,  1.0f,
-            -1.0f,  1.0f,  1.0f,
-            -1.0f,  1.0f, -1.0f,
+            -m_size, -m_size, -m_size,
+            -m_size, -m_size,  m_size,
+            -m_size,  m_size,  m_size,
+            -m_size,  m_size, -m_size,
             // right
-            1.0f, -1.0f,  1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f,  1.0f, -1.0f,
-            1.0f,  1.0f,  1.0f,
+            m_size, -m_size,  m_size,
+            m_size, -m_size, -m_size,
+            m_size,  m_size, -m_size,
+            m_size,  m_size,  m_size,
     };
 }

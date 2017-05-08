@@ -23,7 +23,7 @@ Game::Game(struct android_app *app) :
 
 void Game::initLevel()
 {
-    if(m_initialized) {
+    if (m_initialized) {
         return;
     }
 
@@ -32,6 +32,40 @@ void Game::initLevel()
     m_ball->setPosition(0.0f, 0.0f, 0.0f);
     //m_inputSystem.initialize(&inputTouchLayer);
     //m_inputSystem.addEntity(m_ball.get());
+}
+
+void Game::configureOpenGL() {
+    AndroidGame::configureOpenGL();
+
+    // FIXME: hardcoded path
+    // TODO: move to class, free buffer memory in destructor
+    char* vertexShader = readAsset("shaders/debug.vert");
+    char* fragmentShader = readAsset("shaders/debug.frag");
+
+    if (vertexShader == nullptr || fragmentShader == nullptr) {
+        LOGI("Load shader failed!");
+    }
+    m_shader.compile(vertexShader, fragmentShader);
+
+    free(vertexShader);
+    free(fragmentShader);
+
+    // TODO make geometry independent from opengl or init opengl before gameloop
+    std::unique_ptr<Geometry> geometry = std::make_unique<Cube>(0.5f);
+    geometry->setPrimitive(GL_TRIANGLES);
+    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_ball->setGeometry(std::move(geometry));
+    // TODO sync with physx position
+    m_ball->setPosition(0.0f, 0.0f, 0.0f);
+
+    m_xAxis.setPoints(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
+    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 0.0f);
+
+    m_yAxis.setPoints(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 0.0f);
+
+    m_zAxis.setPoints(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
+    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 0.0f);
 }
 
 void Game::initPhysX() {
@@ -110,7 +144,8 @@ void Game::initPhysX() {
     physx::PxBoxGeometry geometry(dimensions);
 
     physx::PxRigidDynamic *actor = PxCreateDynamic(*m_pxPhysics, transform, geometry, *material, density);
-    actor->setAngularDamping(0.75);
+    //actor->setAngularDamping(0.75);
+    //actor->setLinearDamping(0.1);
     actor->setLinearVelocity(physx::PxVec3(0,0,0));
     if (!actor) {
         LOGI("create actor failed!");
@@ -143,16 +178,38 @@ void Game::drawShape(physx::PxShape* shape, physx::PxRigidActor* actor) {
 }
 void Game::drawBox(physx::PxShape* shape, physx::PxRigidActor* actor) {
     physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
-    physx::PxBoxGeometry bg;
-    shape->getBoxGeometry(bg);
-    physx::PxMat33 m = physx::PxMat33(transform.q );
-    float mat[16];
+    physx::PxBoxGeometry boxGeometry;
+    shape->getBoxGeometry(boxGeometry);
+    physx::PxMat33 mat3 = physx::PxMat33(transform.q);
+    float mat4[16];
     // TODO
-//    getColumnMajor(m,pT.p, mat);
+    getColumnMajor(mat3, transform.p, mat4);
 //    glPushMatrix();
-//    glMultMatrixf(mat);
-//    glutSolidCube(bg.halfExtents.x*2);
+//    glMultMatrixf(mat4);
+//    glutSolidCube(boxGeometry.halfExtents.x*2);
 //    glPopMatrix();
+}
+
+void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
+    mat[0] = m.column0[0];
+    mat[1] = m.column0[1];
+    mat[2] = m.column0[2];
+    mat[3] = 0;
+
+    mat[4] = m.column1[0];
+    mat[5] = m.column1[1];
+    mat[6] = m.column1[2];
+    mat[7] = 0;
+
+    mat[8] = m.column2[0];
+    mat[9] = m.column2[1];
+    mat[10] = m.column2[2];
+    mat[11] = 0;
+
+    mat[12] = t[0];
+    mat[13] = t[1];
+    mat[14] = t[2];
+    mat[15] = 1;
 }
 
 void Game::update(float deltaTime) {
@@ -168,59 +225,58 @@ void Game::update(float deltaTime) {
     //m_ball->updateModelMatrix();
 }
 
-void Game::configureOpenGL() {
-    AndroidGame::configureOpenGL();
-
-    // FIXME: hardcoded path
-    // TODO: move to class, free buffer memory in destructor
-    char* vertexShader = readAsset("shaders/debug.vert");
-    char* fragmentShader = readAsset("shaders/debug.frag");
-
-    if (vertexShader == nullptr || fragmentShader == nullptr) {
-        LOGI("Load shader failed!");
-    }
-    m_shader.compile(vertexShader, fragmentShader);
-
-    free(vertexShader);
-    free(fragmentShader);
-
-    // TODO make geometry independent from opengl or init opengl before gameloop
-    std::unique_ptr<Geometry> geometry = std::make_unique<Sphere>();
-    geometry->setPrimitive(GL_LINES);
-    geometry->setColor(1.0f, 1.0f, 0.0f, 1.0f);
-    m_ball->setGeometry(std::move(geometry));
-    m_ball->setPosition(0.0f, 0.0f, -2.0f);
-
-    m_xAxis.setPoints(glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 0.0f);
-
-    m_yAxis.setPoints(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 0.0f);
-
-    m_zAxis.setPoints(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 0.0f);
-}
-
 void Game::render() {
     AndroidGame::render();
 
-    glm::vec3 camPositionVector(0.0f, 0.0f, 2.0f);
+    glm::vec3 camPositionVector(0.0f, 4.0f, 4.0f);
     glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
-    glm::vec3 camDirectionVector(0.0f, 0.0f, -1.0f);
+    glm::vec3 camDirectionVector(0.0f, -2.0f, -1.0f);
     m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
 
-    auto modelMatrix = m_ball->getModelMatrix();
-    auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+    //auto modelMatrix = m_ball->getModelMatrix();
+    //auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
     m_shader.bind();
 
     // ball
-    m_shader.beginRender(m_ball->getGeometry());
-    m_shader.render(&mvpMatrix, &modelMatrix);
-    m_shader.endRender();
+    //m_shader.beginRender(m_ball->getGeometry());
+    //m_shader.render(&mvpMatrix, &modelMatrix);
+    //m_shader.endRender();
+
+
+    physx::PxU32 nShapes = m_pxBox->getNbShapes();
+    physx::PxShape** shapes = new physx::PxShape*[nShapes];
+
+    // TODO apply physx transform to m_ball
+    m_pxBox->getShapes(shapes, nShapes);
+    while (nShapes--)
+    {
+        drawShape(shapes[nShapes], m_pxBox);
+
+        auto shape = shapes[nShapes];
+        physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *m_pxBox);
+        physx::PxBoxGeometry boxGeometry;
+        shape->getBoxGeometry(boxGeometry);
+        physx::PxMat33 mat3 = physx::PxMat33(transform.q);
+        float mat4[16];
+        getColumnMajor(mat3, transform.p, mat4);
+
+        auto modelMatrix = glm::make_mat4(mat4);
+        auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+        // ball
+        m_shader.beginRender(m_ball->getGeometry());
+        m_shader.render(&mvpMatrix, &modelMatrix);
+        m_shader.endRender();
+
+//    glPushMatrix();
+//    glMultMatrixf(mat4);
+//    glutSolidCube(boxGeometry.halfExtents.x*2);
+//    glPopMatrix();
+    }
+    delete [] shapes;
 
     // debug
     auto identityMatrix = glm::mat4(1.0);
-    mvpMatrix = m_projectionMatrix * m_viewMatrix;
+    auto mvpMatrix = m_projectionMatrix * m_viewMatrix;
     m_shader.beginRender(&m_xAxis);
     m_shader.render(&mvpMatrix, &identityMatrix);
     m_shader.endRender();
