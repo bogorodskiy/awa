@@ -303,7 +303,7 @@ bool AndroidGame::initSurface() {
     EGLint format;
 
     const EGLint attribs[] = {
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, // request OpenGL ES 2.0
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR, // request OpenGL ES 3.0
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,

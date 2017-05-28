@@ -14,8 +14,9 @@ Game::Game(struct android_app *app) :
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
         m_pxGroundPlane(nullptr),
-        m_pxBox(nullptr),
-        m_pxTimestep(1.0f/60.0f)
+        m_pxBall(nullptr),
+        m_pxTimestep(1.0f/60.0f),
+        m_cameraAngle(0.0f)
 {
     initLevel();
     initPhysX();
@@ -37,6 +38,9 @@ void Game::initLevel()
 void Game::configureOpenGL() {
     AndroidGame::configureOpenGL();
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
     // FIXME: hardcoded path
     // TODO: move to class, free buffer memory in destructor
     char* vertexShader = readAsset("shaders/debug.vert");
@@ -51,21 +55,39 @@ void Game::configureOpenGL() {
     free(fragmentShader);
 
     // TODO make geometry independent from opengl or init opengl before gameloop
-    std::unique_ptr<Geometry> geometry = std::make_unique<Cube>(0.5f);
-    geometry->setPrimitive(GL_TRIANGLES);
+    std::unique_ptr<Geometry> geometry = std::make_unique<Sphere>(0.5f);
+    geometry->setPrimitive(GL_LINES);
     geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
     m_ball->setGeometry(std::move(geometry));
-    // TODO sync with physx position
+    // TODO sync with physx position(use physx active transforms)
     m_ball->setPosition(0.0f, 0.0f, 0.0f);
 
     m_xAxis.setPoints(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
-    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 0.0f);
+    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 1.0f);
 
     m_yAxis.setPoints(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 0.0f);
+    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 1.0f);
 
     m_zAxis.setPoints(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
-    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 0.0f);
+    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    m_floor.setSize(2);
+    m_floor.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    m_frontWall.setSize(2);
+    m_frontWall.setColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+    m_backWall.setSize(2);
+    m_backWall.setColor(0.0f, 1.0f, 0.0f, 1.0f);
+
+    m_leftWall.setSize(2);
+    m_leftWall.setColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    m_rightWall.setSize(2);
+    m_rightWall.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    m_ceiling.setSize(2);
+    m_ceiling.setColor(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void Game::initPhysX() {
@@ -118,76 +140,48 @@ void Game::initPhysX() {
 
     // create ground plane
 
-    physx::PxReal d = 0.0f;
-    physx::PxTransform pose = physx::PxTransform(physx::PxVec3(0.0f, 0, 0.0f),
-                                                 physx::PxQuat(physx::PxHalfPi,
-                                                               physx::PxVec3(0.0f, 0.0f, 1.0f)));
-    physx::PxRigidStatic* plane = m_pxPhysics->createRigidStatic(pose);
-    if (!plane) {
-        LOGI("create plane failed!!");
-    }
-    physx::PxShape* shape = plane->createShape(physx::PxPlaneGeometry(), *material);
-    if (!shape) {
-        LOGI("create shape failed!");
-    }
-    m_pxScene->addActor(*plane);
+    // TODO walls, ceiling, change rotation format
+    //auto ceilingRotation = glm::vec4(0.0f, 0.0f, -0.7071f, 0.7071f);
+    auto floorRotation = glm::vec4(0.0f, 0.0f, 0.7071f, 0.7071f);
+    m_pxGroundPlane = createPlane(glm::vec3(0.0f, 0.0f, 0.0f), floorRotation, material);
 
-    //2) Create cube
+    //2) Create sphere
     physx::PxReal density = 1.0f;
     physx::PxQuat quat;
     quat.x = 0.0f;
     quat.y = 0.0f;
     quat.z = 0.0f;
     quat.w = 1.0f;
-    physx::PxTransform transform(physx::PxVec3(0.0f, 10.0f, 0.0f), quat);
-    physx::PxVec3 dimensions(0.5,0.5,0.5);
-    physx::PxBoxGeometry geometry(dimensions);
-
+    physx::PxTransform transform(physx::PxVec3(0.0f, 4.0f, 0.0f), quat);
+    physx::PxSphereGeometry geometry(0.5);
     physx::PxRigidDynamic *actor = PxCreateDynamic(*m_pxPhysics, transform, geometry, *material, density);
+    // damping - friction or resistance, angular = rotation/spinning, linear = moving
     //actor->setAngularDamping(0.75);
     //actor->setLinearDamping(0.1);
     actor->setLinearVelocity(physx::PxVec3(0,0,0));
     if (!actor) {
         LOGI("create actor failed!");
     }
-
     m_pxScene->addActor(*actor);
-
-    m_pxBox = actor;
+    m_pxBall = actor;
 }
 
-void Game::drawActor(physx::PxRigidActor* actor) {
-    physx::PxU32 nShapes = actor->getNbShapes();
-    physx::PxShape** shapes = new physx::PxShape*[nShapes];
-
-    actor->getShapes(shapes, nShapes);
-    while (nShapes--)
-    {
-        drawShape(shapes[nShapes], actor);
+physx::PxRigidActor* Game::createPlane(glm::vec3 position, glm::vec4 quat, physx::PxMaterial* material) {
+    physx::PxTransform pose = physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
+                                                 physx::PxQuat(quat.x, quat.y, quat.z, quat.w));
+                                                 //physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0.0f, 0.0f, 1.0f)));
+    physx::PxRigidStatic* plane = m_pxPhysics->createRigidStatic(pose);
+    if (!plane) {
+        LOGI("Create plane failed!!");
     }
-    delete [] shapes;
-}
-void Game::drawShape(physx::PxShape* shape, physx::PxRigidActor* actor) {
-    physx::PxGeometryType::Enum type = shape->getGeometryType();
-    switch(type)
-    {
-        case physx::PxGeometryType::eBOX:
-            drawBox(shape, actor);
-            break;
+
+    auto planeShape = m_pxPhysics->createShape(physx::PxPlaneGeometry(), *material);
+    if (!planeShape) {
+        LOGI("Create plane shape failed!");
     }
-}
-void Game::drawBox(physx::PxShape* shape, physx::PxRigidActor* actor) {
-    physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
-    physx::PxBoxGeometry boxGeometry;
-    shape->getBoxGeometry(boxGeometry);
-    physx::PxMat33 mat3 = physx::PxMat33(transform.q);
-    float mat4[16];
-    // TODO
-    getColumnMajor(mat3, transform.p, mat4);
-//    glPushMatrix();
-//    glMultMatrixf(mat4);
-//    glutSolidCube(boxGeometry.halfExtents.x*2);
-//    glPopMatrix();
+    plane->attachShape(*planeShape);
+    m_pxScene->addActor(*plane);
+    return plane;
 }
 
 void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
@@ -215,64 +209,41 @@ void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
 void Game::update(float deltaTime) {
     AndroidGame::update(deltaTime);
 
+    m_cameraAngle += 0.5;
+    if (m_cameraAngle >= 360.0f) {
+        m_cameraAngle = 0.0f;
+    }
+
     m_pxScene->simulate(deltaTime);
+    // wait for simulation to finish(separate thread)
     while (!m_pxScene->fetchResults()) {
 
     }
-    //m_inputSystem.update(deltaTime);
-    //m_ball->rotate(glm::vec3(0.0f, 1.0f, 0.0f);
-    //m_ball->setRotation(0.0, 0.0, objectRotation);
-    //m_ball->updateModelMatrix();
 }
 
 void Game::render() {
     AndroidGame::render();
 
-    glm::vec3 camPositionVector(0.0f, 4.0f, 4.0f);
+    // DIAGONAL
+//    glm::vec3 camPositionVector(0.0f, 4.0f, 10.0f);
+//    glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
+//    glm::vec3 camDirectionVector(0.0f, -1.0f, -1.0f);
+
+    // SIDE FROM X
+    float distance = 4.0f;
+    auto radians = glm::radians(m_cameraAngle);
+    glm::vec3 camPositionVector(glm::sin(radians) * distance, 1.0f, glm::cos(radians) * distance);
     glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
-    glm::vec3 camDirectionVector(0.0f, -2.0f, -1.0f);
+    glm::vec3 camDirectionVector(camPositionVector.x * -1.0f, 0.0f, camPositionVector.z * -1.0f);
+
     m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
 
-    //auto modelMatrix = m_ball->getModelMatrix();
-    //auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
     m_shader.bind();
 
     // ball
-    //m_shader.beginRender(m_ball->getGeometry());
-    //m_shader.render(&mvpMatrix, &modelMatrix);
-    //m_shader.endRender();
 
-
-    physx::PxU32 nShapes = m_pxBox->getNbShapes();
-    physx::PxShape** shapes = new physx::PxShape*[nShapes];
-
-    // TODO apply physx transform to m_ball
-    m_pxBox->getShapes(shapes, nShapes);
-    while (nShapes--)
-    {
-        drawShape(shapes[nShapes], m_pxBox);
-
-        auto shape = shapes[nShapes];
-        physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *m_pxBox);
-        physx::PxBoxGeometry boxGeometry;
-        shape->getBoxGeometry(boxGeometry);
-        physx::PxMat33 mat3 = physx::PxMat33(transform.q);
-        float mat4[16];
-        getColumnMajor(mat3, transform.p, mat4);
-
-        auto modelMatrix = glm::make_mat4(mat4);
-        auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
-        // ball
-        m_shader.beginRender(m_ball->getGeometry());
-        m_shader.render(&mvpMatrix, &modelMatrix);
-        m_shader.endRender();
-
-//    glPushMatrix();
-//    glMultMatrixf(mat4);
-//    glutSolidCube(boxGeometry.halfExtents.x*2);
-//    glPopMatrix();
-    }
-    delete [] shapes;
+    renderPxActor(m_pxBall, m_ball->getGeometry());
+    renderPxActor(m_pxGroundPlane, &m_floor);
 
     // debug
     auto identityMatrix = glm::mat4(1.0);
@@ -292,8 +263,28 @@ void Game::render() {
     m_shader.unbind();
 }
 
-void Game::drawAxis(int x, int y, int z) {
+void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
+    physx::PxU32 nShapes = actor->getNbShapes();
+    physx::PxShape** shapes = new physx::PxShape*[nShapes];
 
+    // TODO apply physx transform to m_ball
+    actor->getShapes(shapes, nShapes);
+    while (nShapes--)
+    {
+        auto shape = shapes[nShapes];
+        physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
+        physx::PxMat33 mat3 = physx::PxMat33(transform.q);
+        float mat4[16];
+        getColumnMajor(mat3, transform.p, mat4);
+
+        auto modelMatrix = glm::make_mat4(mat4);
+        auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+        // ball
+        m_shader.beginRender(geometry);
+        m_shader.render(&mvpMatrix, &modelMatrix);
+        m_shader.endRender();
+    }
+    delete [] shapes;
 }
 
 void Game::finalizePhysX() {
@@ -307,9 +298,9 @@ void Game::finalizePhysX() {
 void Game::onResize() {
     AndroidGame::onResize();
     float aspectRatio = (float)m_surfaceWidth / m_surfaceHeight;
-    m_projectionMatrix = glm::perspective(45.0f, aspectRatio, 0.1f, 10.0f);
+    // TODO choose optimal zoom for objects
+    m_projectionMatrix = glm::perspective(45.0f, aspectRatio, 0.01f, 50.0f);
     m_screenHeight = 1080;
-    // TODO removed static const to int, test
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);
 }
@@ -343,4 +334,5 @@ char* Game::readAsset(const std::string& path) {
 Game::~Game()
 {
     finalizePhysX();
+    m_inputSystem.removeAllEntities();
 }

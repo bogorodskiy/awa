@@ -3,16 +3,15 @@
 
 
 #include "../../core/Geometry.h"
-#include <vector>
 
 class Line : public Geometry {
 public:
     Line();
+    ~Line();
     void setPoints(glm::vec3 start, glm::vec3 end);
     virtual GLenum getPrimitive() override;
 private:
     GLfloat* m_vertices;
-    std::vector<GLushort> m_indices;
 };
 
 

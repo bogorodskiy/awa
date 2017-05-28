@@ -1,11 +1,10 @@
 #include "Sphere.h"
 
-Sphere::Sphere() : Geometry::Geometry(),
+Sphere::Sphere(float radius) : Geometry::Geometry(),
                    m_vertices(nullptr),
                    m_normals(nullptr),
                    m_indices(nullptr)
     {
-    float radius = 0.5;
     uint latitudeBands = 30;
     uint longitudeBands = 30;
     int index = 0;

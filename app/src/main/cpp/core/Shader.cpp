@@ -120,9 +120,6 @@ void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
         return;
     }
 
-    // TODO optimize, разобраться зачем
-    //glm::mat3 model3x3Matrix = glm::mat3(*modelMatrix);
-    //model3x3Matrix = glm::transpose(glm::inverse(model3x3Matrix));
     glUniformMatrix4fv(m_mvpMatrixLocation, 1, GL_FALSE, glm::value_ptr(*mvpMatrix));
     // GLint location, GLsizei count, const GLfloat* v
     glUniform4fv(m_colorLocation, 1, glm::value_ptr(*m_renderTarget->getColor()));
@@ -130,9 +127,14 @@ void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
     m_renderTarget->bindNormalBuffer();
     m_renderTarget->unbindNormalBuffer();
 
-    m_renderTarget->bindIndexBuffer();
-    glDrawElements(m_renderTarget->getPrimitive(), m_renderTarget->getNumIndices(), GL_UNSIGNED_SHORT, 0);
-    m_renderTarget->unbindIndexBuffer();
+    if (m_renderTarget->getNumIndices() > 0) {
+        m_renderTarget->bindIndexBuffer();
+        glDrawElements(m_renderTarget->getPrimitive(), m_renderTarget->getNumIndices(), GL_UNSIGNED_SHORT, 0);
+        m_renderTarget->unbindIndexBuffer();
+    }
+    else {
+        glDrawArrays(m_renderTarget->getPrimitive(), 0, m_renderTarget->getNumVertices());
+    }
 }
 
 void Shader::endRender() {

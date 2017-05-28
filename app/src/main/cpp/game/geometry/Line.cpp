@@ -5,6 +5,10 @@ Line::Line() : Geometry::Geometry(),
     m_vertices = new GLfloat[2 * 3];
 }
 
+Line::~Line() {
+    delete[] m_vertices;
+}
+
 void Line::setPoints(glm::vec3 start, glm::vec3 end) {
     m_vertices[0] = start.x;
     m_vertices[1] = start.y;
@@ -14,10 +18,7 @@ void Line::setPoints(glm::vec3 start, glm::vec3 end) {
     m_vertices[4] = end.y;
     m_vertices[5] = end.z;
 
-    setVertices(&m_vertices[0], 6, 3 * sizeof(GLfloat));
-
-    m_indices = {0, 1};
-    setIndices(&m_indices[0], 36 * sizeof(GLushort));
+    setVertices(&m_vertices[0], 2, 3 * sizeof(GLfloat));
 }
 
 GLenum Line::getPrimitive() {

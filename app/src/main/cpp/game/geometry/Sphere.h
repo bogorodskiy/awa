@@ -5,7 +5,7 @@
 
 class Sphere : public Geometry {
 public:
-    Sphere();
+    Sphere(float radius);
     virtual ~Sphere();
 private:
     GLfloat* m_vertices;

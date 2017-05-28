@@ -8,6 +8,7 @@
 #include "../core/AndroidGame.h"
 #include "../core/input/TouchLayer.h"
 #include "geometry/Line.h"
+#include "geometry/Plane.h"
 #include "PxPhysicsAPI.h"
 
 class Game : public AndroidGame {
@@ -33,25 +34,31 @@ private:
     Line m_xAxis;
     Line m_yAxis;
     Line m_zAxis;
+    float m_cameraAngle;
+
+    Plane m_floor;
+    Plane m_frontWall;
+    Plane m_backWall;
+    Plane m_leftWall;
+    Plane m_rightWall;
+    Plane m_ceiling;
 
     InputSystem m_inputSystem;
-    void drawAxis(int x, int y, int z);
 
     // PhysX
     physx::PxFoundation* m_pxFoundation;
     physx::PxPhysics* m_pxPhysics;
     physx::PxScene* m_pxScene;
-    physx::PxActor* m_pxGroundPlane;
-    physx::PxRigidActor* m_pxBox;
+    physx::PxRigidActor* m_pxGroundPlane;
+    physx::PxRigidActor* m_pxBall;
     physx::PxReal m_pxTimestep;
 
     void initLevel();
     void initPhysX();
+    physx::PxRigidActor* createPlane(glm::vec3 position, glm::vec4 quat, physx::PxMaterial* material);
     void finalizePhysX();
-    void drawActor(physx::PxRigidActor* actor);
-    void drawShape(physx::PxShape* shape, physx::PxRigidActor* actor);
-    void drawBox(physx::PxShape* shape, physx::PxRigidActor* actor);
     void getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat);
+    void renderPxActor(physx::PxRigidActor* actor, Geometry* geometry);
 
     // TODO: create file manager
     char* readAsset(const std::string& path);
