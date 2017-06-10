@@ -1,13 +1,16 @@
 #ifndef IRONBALLS_SPHERE_H
 #define IRONBALLS_SPHERE_H
 
-#include "../../core/Geometry.h"
+#include "Geometry.h"
 
 class Sphere : public Geometry {
+    friend class GeometryCache;
 public:
+    virtual void initBuffers() override;
+private:
     Sphere(float radius);
     virtual ~Sphere();
-private:
+
     GLfloat* m_vertices;
     GLfloat* m_normals;
     GLushort* m_indices;

@@ -18,11 +18,11 @@ int GameObject::getId() const{
 }
 
 Geometry* GameObject::getGeometry() const{
-    return m_geometry.get();
+    return m_geometry;
 }
 
-void GameObject::setGeometry(std::unique_ptr<Geometry> geometry) {
-    m_geometry = std::move(geometry);
+void GameObject::setGeometry(Geometry* geometry) {
+    m_geometry = geometry;
 }
 
 const glm::vec3& GameObject::getPosition() const{

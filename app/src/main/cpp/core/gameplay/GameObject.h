@@ -1,8 +1,7 @@
 #ifndef IRON_BALLS_GAMEOBJECT_H
 #define IRON_BALLS_GAMEOBJECT_H
 
-#include <memory>
-#include "../Geometry.h"
+#include "../../game/geometry/Geometry.h"
 
 class GameObject {
 public:
@@ -10,7 +9,7 @@ public:
 
     int getId() const;
     Geometry* getGeometry() const;
-    void setGeometry(std::unique_ptr<Geometry> geometry);
+    void setGeometry(Geometry* geometry);
     const glm::vec3& getPosition() const;
     void setPosition(float x, float y, float z);
     const glm::vec4& getRotation() const;
@@ -25,7 +24,7 @@ public:
     void updateModelMatrix();
 private:
     unsigned int m_id;
-    std::unique_ptr<Geometry> m_geometry;
+    Geometry* m_geometry;
     glm::vec3 m_position;
     glm::vec4 m_rotation;
     glm::vec2 m_moveDirection;

@@ -1,16 +1,21 @@
 #include "Geometry.h"
 
 Geometry::Geometry():
-        m_vbo(0),
         m_numVertices(0),
-        m_primitive(GL_TRIANGLES),
-        m_verticesStride(0),
-        m_ibo(0),
         m_numIndices(0),
         m_numNormals(0),
+        m_primitive(GL_TRIANGLES),
+        m_color(0.0f, 0.0f, 0.0f, 0.0f),
+        m_vbo(0),
+        m_ibo(0),
         m_nbo(0),
+        m_verticesStride(0),
         m_normalsStride(0)
 {
+}
+
+Geometry::~Geometry() {
+    deleteBuffers();
 }
 
 glm::vec4* Geometry::getColor() {
@@ -24,15 +29,15 @@ void Geometry::setColor(float r, float g, float b, float a) {
     m_color.a = a;
 }
 
-uint Geometry::getNumVertices() {
+int Geometry::getNumVertices() {
     return m_numVertices;
 }
 
-uint Geometry::getNumIndices() {
+int Geometry::getNumIndices() {
     return m_numIndices;
 }
 
-uint Geometry::getNumNormals() {
+int Geometry::getNumNormals() {
     return m_numNormals;
 }
 
@@ -109,8 +114,14 @@ void Geometry::unbindNormalBuffer() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-Geometry::~Geometry() {
-    glDeleteBuffers(1, &m_vbo);
-    glDeleteBuffers(1, &m_ibo);
-    glDeleteBuffers(1, &m_nbo);
+void Geometry::deleteBuffers() {
+    if (m_numVertices > 0) {
+        glDeleteBuffers(1, &m_vbo);
+    }
+    if (m_numIndices > 0) {
+        glDeleteBuffers(1, &m_ibo);
+    }
+    if (m_numNormals > 0) {
+        glDeleteBuffers(1, &m_nbo);
+    }
 }

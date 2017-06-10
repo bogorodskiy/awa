@@ -1,8 +1,6 @@
 #include "Game.h"
 #include "geometry/Sphere.h"
-#include "geometry/Cube.h"
-#include "PxPhysics.h"
-#include "PxPhysicsAPI.h"
+#include "geometry/GeometryCache.h"
 
 Game::Game(struct android_app *app) :
         AndroidGame(app),
@@ -10,16 +8,18 @@ Game::Game(struct android_app *app) :
         m_ball(nullptr),
         m_screenWidth(1920),
         m_screenHeight(1080),
+        m_cameraAngle(0.0f),
+        m_xAxis(nullptr),
+        m_yAxis(nullptr),
+        m_zAxis(nullptr),
         m_pxFoundation(nullptr),
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
-        m_pxGroundPlane(nullptr),
         m_pxBall(nullptr),
-        m_pxTimestep(1.0f/60.0f),
-        m_cameraAngle(0.0f)
+        m_pxTimestep(1.0f/60.0f)
 {
-    initLevel();
     initPhysX();
+    initLevel();
 }
 
 void Game::initLevel()
@@ -33,61 +33,57 @@ void Game::initLevel()
     m_ball->setPosition(0.0f, 0.0f, 0.0f);
     //m_inputSystem.initialize(&inputTouchLayer);
     //m_inputSystem.addEntity(m_ball.get());
+
+    auto geometry = GeometryCache::getInstance()->getSphere();
+    geometry->setPrimitive(GL_LINES);
+    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_ball->setGeometry(geometry);
+    // TODO sync with physx position(use physx active transforms)
+    m_ball->setPosition(0.0f, 0.0f, 0.0f);
+
+    m_xAxis = GeometryCache::getInstance()->getLine(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
+    m_xAxis->setColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+    m_yAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+    m_yAxis->setColor(0.0f, 1.0f, 0.0f, 1.0f);
+
+    m_zAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
+    m_zAxis->setColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    m_room.initialize();
 }
 
-void Game::configureOpenGL() {
-    AndroidGame::configureOpenGL();
+void Game::startGraphics() {
+    static auto configured = false;
+    if (configured) {
+        // TODO:
+        LOGI("REconfigre openGL");
+    }
+    else {
+        configured = true;
+    }
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    // FIXME: hardcoded path
-    // TODO: move to class, free buffer memory in destructor
     char* vertexShader = readAsset("shaders/debug.vert");
     char* fragmentShader = readAsset("shaders/debug.frag");
 
     if (vertexShader == nullptr || fragmentShader == nullptr) {
         LOGI("Load shader failed!");
     }
+    m_shader.reset();
     m_shader.compile(vertexShader, fragmentShader);
 
     free(vertexShader);
     free(fragmentShader);
 
-    // TODO make geometry independent from opengl or init opengl before gameloop
-    std::unique_ptr<Geometry> geometry = std::make_unique<Sphere>(0.5f);
-    geometry->setPrimitive(GL_LINES);
-    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_ball->setGeometry(std::move(geometry));
-    // TODO sync with physx position(use physx active transforms)
-    m_ball->setPosition(0.0f, 0.0f, 0.0f);
+    GeometryCache::getInstance()->connect();
+}
 
-    m_xAxis.setPoints(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
-    m_xAxis.setColor(1.0f, 0.0f, 0.0f, 1.0f);
-
-    m_yAxis.setPoints(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-    m_yAxis.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-
-    m_zAxis.setPoints(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
-    m_zAxis.setColor(0.0f, 0.0f, 1.0f, 1.0f);
-
-    m_floor.setSize(2);
-    m_floor.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-    m_frontWall.setSize(2);
-    m_frontWall.setColor(1.0f, 0.0f, 0.0f, 1.0f);
-
-    m_backWall.setSize(2);
-    m_backWall.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-
-    m_leftWall.setSize(2);
-    m_leftWall.setColor(0.0f, 0.0f, 1.0f, 1.0f);
-
-    m_rightWall.setSize(2);
-    m_rightWall.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-    m_ceiling.setSize(2);
-    m_ceiling.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+void Game::killGraphics() {
+    GeometryCache::getInstance()->disconnect();
+    m_shader.reset();
 }
 
 void Game::initPhysX() {
@@ -138,14 +134,9 @@ void Game::initPhysX() {
 
     physx::PxMaterial* material = m_pxPhysics->createMaterial(0.5, 0.5, 0.5);
 
-    // create ground plane
+    m_room.connect(m_pxPhysics, m_pxScene);
 
-    // TODO walls, ceiling, change rotation format
-    //auto ceilingRotation = glm::vec4(0.0f, 0.0f, -0.7071f, 0.7071f);
-    auto floorRotation = glm::vec4(0.0f, 0.0f, 0.7071f, 0.7071f);
-    m_pxGroundPlane = createPlane(glm::vec3(0.0f, 0.0f, 0.0f), floorRotation, material);
-
-    //2) Create sphere
+    // Create sphere
     physx::PxReal density = 1.0f;
     physx::PxQuat quat;
     quat.x = 0.0f;
@@ -164,24 +155,6 @@ void Game::initPhysX() {
     }
     m_pxScene->addActor(*actor);
     m_pxBall = actor;
-}
-
-physx::PxRigidActor* Game::createPlane(glm::vec3 position, glm::vec4 quat, physx::PxMaterial* material) {
-    physx::PxTransform pose = physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
-                                                 physx::PxQuat(quat.x, quat.y, quat.z, quat.w));
-                                                 //physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0.0f, 0.0f, 1.0f)));
-    physx::PxRigidStatic* plane = m_pxPhysics->createRigidStatic(pose);
-    if (!plane) {
-        LOGI("Create plane failed!!");
-    }
-
-    auto planeShape = m_pxPhysics->createShape(physx::PxPlaneGeometry(), *material);
-    if (!planeShape) {
-        LOGI("Create plane shape failed!");
-    }
-    plane->attachShape(*planeShape);
-    m_pxScene->addActor(*plane);
-    return plane;
 }
 
 void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
@@ -240,23 +213,23 @@ void Game::render() {
 
     m_shader.bind();
 
-    // ball
-
     renderPxActor(m_pxBall, m_ball->getGeometry());
-    renderPxActor(m_pxGroundPlane, &m_floor);
+    for (auto& elementPair : m_room.getElements()) {
+        renderPxActor(elementPair.second, elementPair.first);
+    }
 
     // debug
     auto identityMatrix = glm::mat4(1.0);
     auto mvpMatrix = m_projectionMatrix * m_viewMatrix;
-    m_shader.beginRender(&m_xAxis);
+    m_shader.beginRender(m_xAxis);
     m_shader.render(&mvpMatrix, &identityMatrix);
     m_shader.endRender();
 
-    m_shader.beginRender(&m_yAxis);
+    m_shader.beginRender(m_yAxis);
     m_shader.render(&mvpMatrix, &identityMatrix);
     m_shader.endRender();
 
-    m_shader.beginRender(&m_zAxis);
+    m_shader.beginRender(m_zAxis);
     m_shader.render(&mvpMatrix, &identityMatrix);
     m_shader.endRender();
 
@@ -267,7 +240,6 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
     physx::PxU32 nShapes = actor->getNbShapes();
     physx::PxShape** shapes = new physx::PxShape*[nShapes];
 
-    // TODO apply physx transform to m_ball
     actor->getShapes(shapes, nShapes);
     while (nShapes--)
     {
@@ -279,7 +251,7 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
 
         auto modelMatrix = glm::make_mat4(mat4);
         auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
-        // ball
+
         m_shader.beginRender(geometry);
         m_shader.render(&mvpMatrix, &modelMatrix);
         m_shader.endRender();
@@ -303,6 +275,15 @@ void Game::onResize() {
     m_screenHeight = 1080;
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);
+}
+
+void Game::onPause() {
+    // TODO: handle
+    LOGD("APP_CMD_PAUSE");
+}
+void Game::onResume() {
+    // TODO: handle
+    LOGD("APP_CMD_RESUME");
 }
 
 char* Game::readAsset(const std::string& path) {

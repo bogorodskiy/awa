@@ -3,14 +3,18 @@
 Shader::Shader():
         m_vertexShaderId(0),
         m_fragmentShaderId(0),
-        m_programId(-1),
+        m_programId(0),
         m_mvpMatrixLocation(-1),
         m_positionLocation(-1),
         m_renderTarget(nullptr) {
 
 }
 
-GLint Shader::getProgramId() {
+Shader::~Shader() {
+    reset();
+}
+
+GLuint Shader::getProgramId() {
     return m_programId;
 }
 
@@ -146,7 +150,7 @@ void Shader::endRender() {
     m_renderTarget = nullptr;
 }
 
-Shader::~Shader() {
+void Shader::reset() {
     if (m_vertexShaderId) {
         glDeleteShader(m_vertexShaderId);
         m_vertexShaderId = 0;
@@ -159,4 +163,9 @@ Shader::~Shader() {
         glDeleteProgram(m_programId);
         m_programId = 0;
     }
+    m_mvpMatrixLocation = 0;
+    m_positionLocation = 0;
+    m_colorLocation = 0;
+
+    m_renderTarget = nullptr;
 }

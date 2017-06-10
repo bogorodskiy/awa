@@ -20,8 +20,8 @@ AndroidGame::AndroidGame(struct android_app *app) :
         m_hasFocus(false),
         m_isVisible(false),
         m_hasWindow(false),
-        m_hasGLErrors(false),
         m_surfaceSizeInitialized(false),
+        m_graphicsStarted(false),
         m_eglDisplay(EGL_NO_DISPLAY),
         m_eglSurface(EGL_NO_SURFACE),
         m_eglContext(EGL_NO_CONTEXT),
@@ -137,13 +137,14 @@ bool AndroidGame::preRender() {
         // bind them
         if (EGL_FALSE == eglMakeCurrent(m_eglDisplay, m_eglSurface, m_eglSurface, m_eglContext)) {
             LOGE("eglMakeCurrent failed, EGL error %d", eglGetError());
-            // TODO handle error
-            m_hasGLErrors = true;
+            handleEglError(eglGetError());
             return false;
         }
 
-        // configure our global OpenGL settings
-        configureOpenGL();
+        if (!m_graphicsStarted) {
+            m_graphicsStarted = true;
+            startGraphics();
+        }
 
         if (!m_surfaceSizeInitialized) {
             int width;
@@ -166,12 +167,6 @@ bool AndroidGame::preRender() {
     return true;
 }
 
-void AndroidGame::configureOpenGL() {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-}
-
 void AndroidGame::render() {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glEnable(GL_DEPTH_TEST);
@@ -182,15 +177,13 @@ void AndroidGame::postRender() {
     auto swapResult = eglSwapBuffers(m_eglDisplay, m_eglSurface);
     if (swapResult == EGL_FALSE) {
         LOGW("eglSwapBuffers failed, EGL error %d", eglGetError());
-        // TODO handle error
-        m_hasGLErrors = true;
+        handleEglError(eglGetError());
         return;
     }
 
     GLenum error;
     static int errorsPrinted = 0;
     while ((error = glGetError()) != GL_NO_ERROR) {
-        m_hasGLErrors = true;
         if (errorsPrinted < 10) {
             _log_opengl_error(error);
             ++errorsPrinted;
@@ -232,10 +225,10 @@ void AndroidGame::handleCommand(int32_t cmd) {
             m_hasFocus = false;
             break;
         case APP_CMD_PAUSE:
-            LOGD("APP_CMD_PAUSE");
+            onPause();
             break;
         case APP_CMD_RESUME:
-            LOGD("APP_CMD_RESUME");
+            onResume();
             break;
         case APP_CMD_STOP:
             LOGD("APP_CMD_STOP");
@@ -260,12 +253,42 @@ void AndroidGame::handleCommand(int32_t cmd) {
             // cooperate by deallocating all of our graphic resources.
             if (!m_hasWindow) {
                 LOGD("trimming memory footprint (deleting GL objects).");
-                // TODO kill gl objects
+                if (m_graphicsStarted) {
+                    killGraphics();
+                    m_graphicsStarted = false;
+                }
             }
             break;
         default:
             LOGD("(unknown command).");
             break;
+    }
+}
+
+bool AndroidGame::handleEglError(EGLint error) {
+    switch (error) {
+        case EGL_SUCCESS:
+            // nothing to do
+            return true;
+        case EGL_CONTEXT_LOST:
+            LOGW("NativeEngine: egl error: EGL_CONTEXT_LOST. Recreating context.");
+            finalizeContext();
+            return true;
+        case EGL_BAD_CONTEXT:
+            LOGW("NativeEngine: egl error: EGL_BAD_CONTEXT. Recreating context.");
+            finalizeContext();
+            return true;
+        case EGL_BAD_DISPLAY:
+            LOGW("NativeEngine: egl error: EGL_BAD_DISPLAY. Recreating display.");
+            finalizeDisplay();
+            return true;
+        case EGL_BAD_SURFACE:
+            LOGW("NativeEngine: egl error: EGL_BAD_SURFACE. Recreating display.");
+            finalizeSurface();
+            return true;
+        default:
+            LOGW("NativeEngine: unknown egl error: %d", error);
+            return false;
     }
 }
 
@@ -391,8 +414,10 @@ void AndroidGame::finalizeSurface() {
 void AndroidGame::finalizeContext() {
     LOGD("Killing context.");
 
-    // since the context is going away, we have to kill the GL objects
-    //KillGLObjects();
+    if (m_graphicsStarted) {
+        killGraphics();
+        m_graphicsStarted = false;
+    }
 
     eglMakeCurrent(m_eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 

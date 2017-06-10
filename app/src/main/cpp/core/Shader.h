@@ -4,7 +4,7 @@
 #include <GLES3/gl3.h>
 #include <stdlib.h>
 #include "common.h"
-#include "Geometry.h"
+#include "../game/geometry/Geometry.h"
 #include "light.h"
 
 class Shader {
@@ -12,7 +12,7 @@ public:
     Shader();
     ~Shader();
 
-    GLint getProgramId();
+    GLuint getProgramId();
 
     virtual void compile(const char* vertexShader, const char* fragmentShader);
     void bind();
@@ -20,6 +20,7 @@ public:
     virtual void beginRender(Geometry* renderTarget);
     virtual void render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix);
     virtual void endRender();
+    virtual void reset();
 protected:
     GLuint m_vertexShaderId;
     GLuint m_fragmentShaderId;

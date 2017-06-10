@@ -4,7 +4,7 @@
 #include <string>
 #include <android/asset_manager.h>
 #include "../core/common.h"
-#include "../core/Geometry.h"
+#include "geometry/Geometry.h"
 #include "../core/Shader.h"
 
 class Renderer {

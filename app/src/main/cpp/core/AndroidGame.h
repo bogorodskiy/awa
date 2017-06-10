@@ -13,6 +13,7 @@ extern "C" {
 #include <time.h>
 #include "common.h"
 #include "../core/input/TouchLayer.h"
+#include "stdlib.h"
 
 struct AndroidGameSavedState {
     int32_t x;
@@ -40,9 +41,11 @@ protected:
     int m_surfaceWidth;
     int m_surfaceHeight;
 
-    virtual void configureOpenGL();
     virtual void onResize();
-
+    virtual void onPause() = 0;
+    virtual void onResume() = 0;
+    virtual void startGraphics() = 0;
+    virtual void killGraphics() = 0;
 private:
     static const float MAX_DELTA_TIME;
     struct AndroidGameSavedState m_state;
@@ -50,10 +53,9 @@ private:
     bool m_hasFocus;
     bool m_isVisible;
     bool m_hasWindow;
-    bool m_hasGLErrors;
     bool m_surfaceSizeInitialized;
+    bool m_graphicsStarted;
 
-    // EGL stuff
     EGLDisplay m_eglDisplay;
     EGLSurface m_eglSurface;
     EGLContext m_eglContext;
@@ -68,6 +70,8 @@ private:
     void finalizeContext();
     void finalizeSurface();
     void finalizeDisplay();
+
+    bool handleEglError(EGLint error);
 
     bool preRender();
     void postRender();

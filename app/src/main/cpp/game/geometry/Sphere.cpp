@@ -1,30 +1,31 @@
 #include "Sphere.h"
 
+// TODO: num vertices depends on radius
 Sphere::Sphere(float radius) : Geometry::Geometry(),
                    m_vertices(nullptr),
                    m_normals(nullptr),
                    m_indices(nullptr)
     {
-    uint latitudeBands = 30;
-    uint longitudeBands = 30;
-    int index = 0;
-    uint numVertices = (latitudeBands + 1) * (longitudeBands + 1);
-    m_vertices = new GLfloat[numVertices * 3];
+    auto latitudeBands = 30;
+    auto longitudeBands = 30;
+    auto index = 0;
+    m_numVertices = (latitudeBands + 1) * (longitudeBands + 1);
+    m_vertices = new GLfloat[m_numVertices * 3];
 
-    uint numIndices = (latitudeBands + 1) * (longitudeBands + 1) * 6;
-    m_indices = new GLushort[numIndices];
+    m_numIndices = (latitudeBands + 1) * (longitudeBands + 1) * 6;
+    m_indices = new GLushort[m_numIndices];
 
-    m_normals = new GLfloat[numVertices * 3];
+    m_normals = new GLfloat[m_numVertices * 3];
 
-    for (int latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-        double theta = latNumber * M_PI / (double)latitudeBands;
-        double sinTheta = glm::sin(theta);
-        double cosTheta = glm::cos(theta);
+    for (auto latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+        auto theta = latNumber * M_PI / (double)latitudeBands;
+        auto sinTheta = glm::sin(theta);
+        auto cosTheta = glm::cos(theta);
 
-        for (int longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-            double phi = longNumber * 2 * M_PI / (double) longitudeBands;
-            double sinPhi = glm::sin(phi);
-            double cosPhi = glm::cos(phi);
+        for (auto longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+            auto phi = longNumber * 2 * M_PI / (double) longitudeBands;
+            auto sinPhi = glm::sin(phi);
+            auto cosPhi = glm::cos(phi);
             GLfloat x = (GLfloat)(cosPhi * sinTheta);
             GLfloat y = (GLfloat)(cosTheta);
             GLfloat z = (GLfloat)(sinPhi * sinTheta);
@@ -44,10 +45,10 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
     }
 
     index = 0;
-    for (int latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-        for (int longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-            uint first = (uint)(latNumber * (longitudeBands + 1)) + longNumber;
-            uint second = first + longitudeBands + 1;
+    for (auto latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+        for (auto longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+            auto first = (uint)(latNumber * (longitudeBands + 1)) + longNumber;
+            auto second = first + longitudeBands + 1;
             m_indices[index] = (GLushort)first;
             index++;
             m_indices[index] = (GLushort)second;
@@ -63,14 +64,22 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
             index++;
         }
     }
+}
 
-    setVertices(m_vertices, numVertices, 3 * sizeof(GLfloat));
-    setIndices(m_indices, numIndices * 3 * sizeof(GLushort));
-    setNormals(m_normals, numVertices, 3 * sizeof(GLfloat));
+void Sphere::initBuffers() {
+    setVertices(m_vertices, m_numVertices, 3 * sizeof(GLfloat));
+    setIndices(m_indices, m_numIndices * 3 * sizeof(GLushort));
+    setNormals(m_normals, m_numVertices, 3 * sizeof(GLfloat));
 }
 
 Sphere::~Sphere() {
-    delete [] m_vertices;
-    delete [] m_indices;
-    delete [] m_normals;
+    if (m_vertices != nullptr) {
+        delete[] m_vertices;
+    }
+    if (m_indices != nullptr) {
+        delete [] m_indices;
+    }
+    if (m_normals != nullptr) {
+        delete [] m_normals;
+    }
 }

@@ -3,16 +3,15 @@
 
 
 #include <stdint.h>
-#include "common.h"
+#include "../../core/common.h"
 
 class Geometry {
-public:
-    Geometry();
-    virtual ~Geometry();
+    friend class GeometryCache;
 
-    uint getNumVertices();
-    uint getNumIndices();
-    uint getNumNormals();
+public:
+    int getNumVertices();
+    int getNumIndices();
+    int getNumNormals();
 
     int getVerticesStride();
     int getNormalsStride();
@@ -32,19 +31,26 @@ public:
     void unbindIndexBuffer();
     void unbindNormalBuffer();
 
+    virtual void initBuffers() = 0;
+    void deleteBuffers();
+
+protected:
+    int m_numVertices;
+    int m_numIndices;
+    int m_numNormals;
+
+    Geometry();
+    virtual ~Geometry();
+
 private:
-    GLuint m_vbo;
+    GLenum m_primitive;
     glm::vec4 m_color;
 
-    uint m_numVertices;
-    GLenum m_primitive;
-    int m_verticesStride;
-
+    GLuint m_vbo;
     GLuint m_ibo;
-    uint m_numIndices;
-
-    uint m_numNormals;
     GLuint m_nbo;
+
+    int m_verticesStride;
     int m_normalsStride;
 };
 
