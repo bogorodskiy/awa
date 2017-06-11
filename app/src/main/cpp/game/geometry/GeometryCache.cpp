@@ -37,15 +37,16 @@ Geometry* GeometryCache::getSphere() {
 }
 
 Geometry* GeometryCache::getPlane() {
-    if (m_geometries.find(GeometryType::PLANE) != m_geometries.end()) {
-        return m_geometries[GeometryType::PLANE];
-    }
+//    if (m_geometries.find(GeometryType::PLANE) != m_geometries.end()) {
+//        return m_geometries[GeometryType::PLANE];
+//    }
 
-    auto plane = new Plane(2);
+    auto plane = new Plane(10);
     if (m_graphicsReady) {
         plane->initBuffers();
     }
-    m_geometries[GeometryType::PLANE] = plane;
+//    m_geometries[GeometryType::PLANE] = plane;
+    m_debugGeometries.emplace_back(plane);
     return plane;
 }
 

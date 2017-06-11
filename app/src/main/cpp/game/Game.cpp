@@ -15,75 +15,10 @@ Game::Game(struct android_app *app) :
         m_pxFoundation(nullptr),
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
-        m_pxBall(nullptr),
         m_pxTimestep(1.0f/60.0f)
 {
     initPhysX();
     initLevel();
-}
-
-void Game::initLevel()
-{
-    if (m_initialized) {
-        return;
-    }
-
-    m_initialized = true;
-    m_ball = std::make_unique<GameObject>(0);
-    m_ball->setPosition(0.0f, 0.0f, 0.0f);
-    //m_inputSystem.initialize(&inputTouchLayer);
-    //m_inputSystem.addEntity(m_ball.get());
-
-    auto geometry = GeometryCache::getInstance()->getSphere();
-    geometry->setPrimitive(GL_LINES);
-    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_ball->setGeometry(geometry);
-    // TODO sync with physx position(use physx active transforms)
-    m_ball->setPosition(0.0f, 0.0f, 0.0f);
-
-    m_xAxis = GeometryCache::getInstance()->getLine(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
-    m_xAxis->setColor(1.0f, 0.0f, 0.0f, 1.0f);
-
-    m_yAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-    m_yAxis->setColor(0.0f, 1.0f, 0.0f, 1.0f);
-
-    m_zAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
-    m_zAxis->setColor(0.0f, 0.0f, 1.0f, 1.0f);
-
-    m_room.initialize();
-}
-
-void Game::startGraphics() {
-    static auto configured = false;
-    if (configured) {
-        // TODO:
-        LOGI("REconfigre openGL");
-    }
-    else {
-        configured = true;
-    }
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    char* vertexShader = readAsset("shaders/debug.vert");
-    char* fragmentShader = readAsset("shaders/debug.frag");
-
-    if (vertexShader == nullptr || fragmentShader == nullptr) {
-        LOGI("Load shader failed!");
-    }
-    m_shader.reset();
-    m_shader.compile(vertexShader, fragmentShader);
-
-    free(vertexShader);
-    free(fragmentShader);
-
-    GeometryCache::getInstance()->connect();
-}
-
-void Game::killGraphics() {
-    GeometryCache::getInstance()->disconnect();
-    m_shader.reset();
 }
 
 void Game::initPhysX() {
@@ -132,9 +67,36 @@ void Game::initPhysX() {
     m_pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.0);
     m_pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0);
 
-    physx::PxMaterial* material = m_pxPhysics->createMaterial(0.5, 0.5, 0.5);
-
     m_room.connect(m_pxPhysics, m_pxScene);
+}
+
+void Game::initLevel()
+{
+    if (m_initialized) {
+        return;
+    }
+
+    m_initialized = true;
+
+    m_ball = createBall();
+
+    m_inputSystem.initialize(&inputTouchLayer);
+    m_inputSystem.addEntity(m_ball.get());
+
+    m_xAxis = GeometryCache::getInstance()->getLine(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
+    m_xAxis->setColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+    m_yAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+    m_yAxis->setColor(0.0f, 1.0f, 0.0f, 1.0f);
+
+    m_zAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
+    m_zAxis->setColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    m_room.initialize();
+}
+
+std::unique_ptr<GameObject> Game::createBall() {
+    physx::PxMaterial* material = m_pxPhysics->createMaterial(0.5, 0.5, 0.5);
 
     // Create sphere
     physx::PxReal density = 1.0f;
@@ -143,9 +105,9 @@ void Game::initPhysX() {
     quat.y = 0.0f;
     quat.z = 0.0f;
     quat.w = 1.0f;
-    physx::PxTransform transform(physx::PxVec3(0.0f, 4.0f, 0.0f), quat);
-    physx::PxSphereGeometry geometry(0.5);
-    physx::PxRigidDynamic *actor = PxCreateDynamic(*m_pxPhysics, transform, geometry, *material, density);
+    physx::PxTransform transform(physx::PxVec3(0.0f, 3.0f, 0.0f), quat);
+    physx::PxSphereGeometry pxGeometry(0.5);
+    physx::PxRigidDynamic* actor = PxCreateDynamic(*m_pxPhysics, transform, pxGeometry, *material, density);
     // damping - friction or resistance, angular = rotation/spinning, linear = moving
     //actor->setAngularDamping(0.75);
     //actor->setLinearDamping(0.1);
@@ -154,7 +116,46 @@ void Game::initPhysX() {
         LOGI("create actor failed!");
     }
     m_pxScene->addActor(*actor);
-    m_pxBall = actor;
+
+    auto geometry = GeometryCache::getInstance()->getSphere();
+    geometry->setPrimitive(GL_LINES);
+    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    auto result = std::make_unique<GameObject>(0, geometry, actor);
+    return result;
+}
+
+void Game::startGraphics() {
+    static auto configured = false;
+    if (configured) {
+        // TODO:
+        LOGI("REconfigre openGL");
+    }
+    else {
+        configured = true;
+    }
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    char* vertexShader = readAsset("shaders/debug.vert");
+    char* fragmentShader = readAsset("shaders/debug.frag");
+
+    if (vertexShader == nullptr || fragmentShader == nullptr) {
+        LOGI("Load shader failed!");
+    }
+    m_shader.reset();
+    m_shader.compile(vertexShader, fragmentShader);
+
+    free(vertexShader);
+    free(fragmentShader);
+
+    GeometryCache::getInstance()->connect();
+}
+
+void Game::killGraphics() {
+    GeometryCache::getInstance()->disconnect();
+    m_shader.reset();
 }
 
 void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
@@ -182,11 +183,12 @@ void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
 void Game::update(float deltaTime) {
     AndroidGame::update(deltaTime);
 
-    m_cameraAngle += 0.5;
-    if (m_cameraAngle >= 360.0f) {
-        m_cameraAngle = 0.0f;
-    }
+//    m_cameraAngle += 0.5;
+//    if (m_cameraAngle >= 360.0f) {
+//        m_cameraAngle = 0.0f;
+//    }
 
+    m_inputSystem.update(deltaTime);
     m_pxScene->simulate(deltaTime);
     // wait for simulation to finish(separate thread)
     while (!m_pxScene->fetchResults()) {
@@ -203,17 +205,19 @@ void Game::render() {
 //    glm::vec3 camDirectionVector(0.0f, -1.0f, -1.0f);
 
     // SIDE FROM X
-    float distance = 4.0f;
+    float distance = 12.0f;
     auto radians = glm::radians(m_cameraAngle);
-    glm::vec3 camPositionVector(glm::sin(radians) * distance, 1.0f, glm::cos(radians) * distance);
+    glm::vec3 camPositionVector(glm::sin(radians) * distance, 5.0f, glm::cos(radians) * distance);
+    //glm::vec3 camPositionVector(glm::sin(radians) * distance, 2.0f, glm::cos(radians) * distance);
     glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
     glm::vec3 camDirectionVector(camPositionVector.x * -1.0f, 0.0f, camPositionVector.z * -1.0f);
+    //glm::vec3 camDirectionVector(0.0f, 10.0f, -10.0f);
 
     m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
 
     m_shader.bind();
 
-    renderPxActor(m_pxBall, m_ball->getGeometry());
+    renderPxActor(m_ball->getActor(), m_ball->getGeometry());
     for (auto& elementPair : m_room.getElements()) {
         renderPxActor(elementPair.second, elementPair.first);
     }

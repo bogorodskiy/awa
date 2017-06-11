@@ -384,6 +384,8 @@ bool AndroidGame::initContext() {
 
     LOGD("Successfull initialized context.");
 
+
+
     return true;
 }
 

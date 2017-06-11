@@ -3,7 +3,8 @@
 InputComponent::InputComponent():
         active(false),
         index(-1),
-        m_moveHandler(TouchInputHandler::STICK, 0),
+        m_moveHandler(TouchInputHandler::TouchInputType::STICK, 0),
+        m_actionHandler(TouchInputHandler::TouchInputType::BUTTON, 1),
         m_gameObject(nullptr),
         m_touchLayer(nullptr)
 
@@ -14,10 +15,11 @@ InputComponent::InputComponent():
 void InputComponent::connect(TouchLayer* touchLayer) {
     m_touchLayer = touchLayer;
 
-    // TODO logic for other commands like shooting, jumping etc
     // TODO height from touch layer or const
     m_moveHandler.updateBounds(600, 1080, ScreenBounds::AlignHorizontal::LEFT, ScreenBounds::AlignVertical::TOP);
     m_touchLayer->addTouchHandler(&m_moveHandler);
+    m_actionHandler.updateBounds(600, 1080, ScreenBounds::AlignHorizontal::RIGHT, ScreenBounds::AlignVertical::TOP);
+    m_touchLayer->addTouchHandler(&m_actionHandler);
 }
 
 void InputComponent::setEntity(GameObject *gameObject) {
@@ -27,10 +29,11 @@ void InputComponent::setEntity(GameObject *gameObject) {
 
 void InputComponent::update(float deltaTime) {
     if (m_moveHandler.getActive()) {
-        m_gameObject->setMoveDirection(m_moveHandler.getDirectionX(), -m_moveHandler.getDirectionY());
+        auto amplifier = 5.0f;
+        m_gameObject->addForce(m_moveHandler.getDirectionX() * amplifier, 0.0f, -m_moveHandler.getDirectionY() * amplifier);
     }
-    else{
-        m_gameObject->setMoveDirection(0.0f, 0.0f);
+    if (m_actionHandler.getAndResetTouched()) {
+        m_gameObject->addImpulse(0.0f, 4.0f, 0.0f);
     }
 }
 

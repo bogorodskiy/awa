@@ -18,6 +18,7 @@ public:
     void releaseEntity();
 private:
     TouchInputHandler m_moveHandler;
+    TouchInputHandler m_actionHandler;
 
     GameObject* m_gameObject;
     TouchLayer* m_touchLayer;

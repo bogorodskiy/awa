@@ -40,7 +40,6 @@ private:
     physx::PxFoundation* m_pxFoundation;
     physx::PxPhysics* m_pxPhysics;
     physx::PxScene* m_pxScene;
-    physx::PxRigidActor* m_pxBall;
     physx::PxReal m_pxTimestep;
 
     Shader m_shader;
@@ -56,6 +55,7 @@ private:
     void finalizePhysX();
     void getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat);
     void renderPxActor(physx::PxRigidActor* actor, Geometry* geometry);
+    std::unique_ptr<GameObject> createBall();
 
     // TODO: create file manager
     char* readAsset(const std::string& path);

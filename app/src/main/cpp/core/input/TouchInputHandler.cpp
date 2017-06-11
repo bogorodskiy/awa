@@ -2,28 +2,28 @@
 #include <string>
 #include "TouchInputHandler.h"
 
-TouchInputHandler::TouchInputHandler() {
-}
-
-TouchInputHandler::TouchInputHandler(Type type, int zIndex) {
-    m_type = type;
-    m_zIndex = zIndex;
-    m_pointerId = -1;
+TouchInputHandler::TouchInputHandler(TouchInputHandler::TouchInputType type, int zIndex):
+        m_type(type),
+        m_zIndex(zIndex),
+        m_pointerId(-1),
+        m_startX(0.0f),
+        m_startY(0.0f),
+        m_directionX(0.0f),
+        m_directionY(0.0f),
+        m_touched(false),
+        m_released(true)
+{
     m_bounds.alignHorizontal = ScreenBounds::AlignHorizontal::LEFT;
     m_bounds.alignVertical = ScreenBounds::AlignVertical::BOTTOM;
     m_bounds.width = 0;
     m_bounds.height = 0;
-    m_startX = 0.0f;
-    m_startY = 0.0f;
-    m_directionX = 0.0f;
-    m_directionY = 0.0f;
 }
 
 int TouchInputHandler::getPointerId() {
     return m_pointerId;
 }
 
-int TouchInputHandler::getType() {
+TouchInputHandler::TouchInputType TouchInputHandler::getType() {
     return m_type;
 }
 
@@ -33,6 +33,12 @@ const int& TouchInputHandler::getZIndex() {
 
 bool TouchInputHandler::getActive() {
     return m_pointerId >= 0;
+}
+
+bool TouchInputHandler::getAndResetTouched() {
+    auto result = m_touched;
+    m_touched = false;
+    return result;
 }
 
 float TouchInputHandler::getDirectionX() {
@@ -61,9 +67,14 @@ void TouchInputHandler::start(int32_t pointerId, float x, float y) {
     m_startX = x;
     m_startY = y;
 
-    std::string name = (m_type == Type::STICK) ? "Move handler " : " Attack handler ";
+    std::string name = (m_type == TouchInputHandler::TouchInputType::STICK) ? "Move handler " : " Attack handler ";
     name += " start";
     LOGD(name.c_str());
+
+    m_touched = true;
+    m_released = false;
+
+    LOGD("++ START");
 }
 
 void TouchInputHandler::move(float x, float y) {
@@ -78,9 +89,12 @@ void TouchInputHandler::move(float x, float y) {
 void TouchInputHandler::end() {
     m_pointerId = -1;
 
-    std::string name = (m_type == Type::STICK) ? "Move handler " : " Attack handler ";
+    std::string name = (m_type == TouchInputHandler::TouchInputType::STICK) ? "Move handler " : " Attack handler ";
     name += " end";
     LOGD(name.c_str());
+
+    m_touched = false;
+    m_released = true;
 }
 
 TouchInputHandler::~TouchInputHandler() {

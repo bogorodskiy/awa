@@ -7,21 +7,21 @@
 
 class TouchInputHandler {
 public:
-    enum Type {
+    enum class TouchInputType {
         STICK,
         BUTTON
     };
 
-    TouchInputHandler();
-    TouchInputHandler(Type type, int zIndex);
+    TouchInputHandler(TouchInputType type, int zIndex);
     ~TouchInputHandler();
 
     int getPointerId();
-    int getType();
+    TouchInputType getType();
     float getDirectionX();
     float getDirectionY();
     const int& getZIndex();
     bool getActive();
+    bool getAndResetTouched();
     void updateBounds(int width, int height, ScreenBounds::AlignHorizontal hAlign, ScreenBounds::AlignVertical vAlign);
     bool contains(float x, float y, int screenWidth, int screenHeight);
 
@@ -30,14 +30,16 @@ public:
     void end();
 
 private:
-    int32_t m_pointerId;
-    Type m_type;
-    ScreenBounds m_bounds;
+    TouchInputType m_type;
     int m_zIndex;
+    int32_t m_pointerId;
+    ScreenBounds m_bounds;
     float m_startX;
     float m_startY;
     float m_directionX;
     float m_directionY;
+    bool m_touched;
+    bool m_released;
 };
 
 
