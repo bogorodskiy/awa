@@ -15,10 +15,17 @@ Game::Game(struct android_app *app) :
         m_pxFoundation(nullptr),
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
-        m_pxTimestep(1.0f/60.0f)
+        m_pxTimestep(1.0f/60.0f),
+        m_pxShapeBuffer(nullptr)
 {
     initPhysX();
     initLevel();
+}
+
+Game::~Game()
+{
+    finalizePhysX();
+    m_inputSystem.removeAllEntities();
 }
 
 void Game::initPhysX() {
@@ -44,9 +51,7 @@ void Game::initPhysX() {
     LOGI("PxCreatePhysics success!");
 
     physx::PxSceneDesc sceneDescription(tolerance);
-    sceneDescription.gravity.x = 0.0f;
-    sceneDescription.gravity.y = -9.8f;
-    sceneDescription.gravity.z = 0.0f;
+    sceneDescription.simulationEventCallback = this;
     if (!sceneDescription.cpuDispatcher) {
         physx::PxDefaultCpuDispatcher* mCpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
         if(!mCpuDispatcher) {
@@ -68,6 +73,19 @@ void Game::initPhysX() {
     m_pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0);
 
     m_room.connect(m_pxPhysics, m_pxScene);
+
+    m_pxShapeBuffer = new physx::PxShape*[1];
+}
+
+void Game::finalizePhysX() {
+    m_pxPhysics->release();
+    m_pxPhysics = nullptr;
+
+    m_pxFoundation->release();
+    m_pxFoundation = nullptr;
+
+    delete [] m_pxShapeBuffer;
+    m_pxShapeBuffer = nullptr;
 }
 
 void Game::initLevel()
@@ -121,7 +139,7 @@ std::unique_ptr<GameObject> Game::createBall() {
     geometry->setPrimitive(GL_LINES);
     geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    auto result = std::make_unique<GameObject>(0, geometry, actor);
+    auto result = std::make_unique<GameObject>(0, geometry, actor, m_pxShapeBuffer);
     return result;
 }
 
@@ -189,10 +207,22 @@ void Game::update(float deltaTime) {
 //    }
 
     m_inputSystem.update(deltaTime);
+
+    m_ball->applyGravity();
+
     m_pxScene->simulate(deltaTime);
     // wait for simulation to finish(separate thread)
     while (!m_pxScene->fetchResults()) {
 
+    }
+
+    // TODO: remove test
+    physx::PxU32 numActiveActors = 0;
+    auto activeActors = m_pxScene->getActiveActors(numActiveActors);
+    for (physx::PxU32 i = 0; i < numActiveActors; ++i)
+    {
+        GameObject* gameObject = static_cast<GameObject*>(activeActors[i]->userData);
+        //physx::PxSimulationEventCallback
     }
 }
 
@@ -205,10 +235,10 @@ void Game::render() {
 //    glm::vec3 camDirectionVector(0.0f, -1.0f, -1.0f);
 
     // SIDE FROM X
-    float distance = 12.0f;
+    float distance = 20.0f;
     auto radians = glm::radians(m_cameraAngle);
-    glm::vec3 camPositionVector(glm::sin(radians) * distance, 5.0f, glm::cos(radians) * distance);
-    //glm::vec3 camPositionVector(glm::sin(radians) * distance, 2.0f, glm::cos(radians) * distance);
+    //glm::vec3 camPositionVector(glm::sin(radians) * distance, 5.0f, glm::cos(radians) * distance);
+    glm::vec3 camPositionVector(0.0f, 5.0f, distance);
     glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
     glm::vec3 camDirectionVector(camPositionVector.x * -1.0f, 0.0f, camPositionVector.z * -1.0f);
     //glm::vec3 camDirectionVector(0.0f, 10.0f, -10.0f);
@@ -242,12 +272,15 @@ void Game::render() {
 
 void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
     physx::PxU32 nShapes = actor->getNbShapes();
-    physx::PxShape** shapes = new physx::PxShape*[nShapes];
+    if (nShapes > 1) {
+        LOGI("ERROR: Actor has more than one shape");
+        return;
+    }
 
-    actor->getShapes(shapes, nShapes);
+    actor->getShapes(m_pxShapeBuffer, nShapes);
     while (nShapes--)
-    {
-        auto shape = shapes[nShapes];
+        {
+        auto shape = m_pxShapeBuffer[nShapes];
         physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
         physx::PxMat33 mat3 = physx::PxMat33(transform.q);
         float mat4[16];
@@ -260,15 +293,6 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
         m_shader.render(&mvpMatrix, &modelMatrix);
         m_shader.endRender();
     }
-    delete [] shapes;
-}
-
-void Game::finalizePhysX() {
-    m_pxPhysics->release();
-    m_pxPhysics = nullptr;
-
-    m_pxFoundation->release();
-    m_pxFoundation = nullptr;
 }
 
 void Game::onResize() {
@@ -279,6 +303,15 @@ void Game::onResize() {
     m_screenHeight = 1080;
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);
+}
+
+void Game::onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
+    // TODO
+}
+
+void Game::onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {
+    // TODO
+    // called from shapes that marked as triggers
 }
 
 void Game::onPause() {
@@ -316,8 +349,3 @@ char* Game::readAsset(const std::string& path) {
     return buffer;
 }
 
-Game::~Game()
-{
-    finalizePhysX();
-    m_inputSystem.removeAllEntities();
-}

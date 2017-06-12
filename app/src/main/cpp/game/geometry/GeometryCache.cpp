@@ -11,11 +11,11 @@ GeometryCache::~GeometryCache() {
     for (const auto& pair : m_geometries) {
         delete pair.second;
     }
-    for (const auto& geometry: m_debugGeometries) {
+    for (const auto& geometry: m_uniqueGeometries) {
         delete geometry;
     }
     m_geometries.clear();
-    m_debugGeometries.clear();
+    m_uniqueGeometries.clear();
 }
 
 GeometryCache* GeometryCache::getInstance() {
@@ -36,17 +36,12 @@ Geometry* GeometryCache::getSphere() {
     return sphere;
 }
 
-Geometry* GeometryCache::getPlane() {
-//    if (m_geometries.find(GeometryType::PLANE) != m_geometries.end()) {
-//        return m_geometries[GeometryType::PLANE];
-//    }
-
-    auto plane = new Plane(10);
+Geometry* GeometryCache::getPlane(float width, float height) {
+    auto plane = new Plane(width, height);
     if (m_graphicsReady) {
         plane->initBuffers();
     }
-//    m_geometries[GeometryType::PLANE] = plane;
-    m_debugGeometries.emplace_back(plane);
+    m_uniqueGeometries.emplace_back(plane);
     return plane;
 }
 
@@ -55,7 +50,7 @@ Geometry* GeometryCache::getLine(glm::vec3 start, glm::vec3 end) {
     if (m_graphicsReady) {
         line->initBuffers();
     }
-    m_debugGeometries.emplace_back(line);
+    m_uniqueGeometries.emplace_back(line);
     return line;
 }
 
@@ -68,7 +63,7 @@ void GeometryCache::connect() {
     for (const auto& pair : m_geometries) {
         pair.second->initBuffers();
     }
-    for (const auto& geometry: m_debugGeometries) {
+    for (const auto& geometry: m_uniqueGeometries) {
         geometry->initBuffers();
     }
 }
@@ -82,7 +77,7 @@ void GeometryCache::disconnect() {
     for (const auto& pair : m_geometries) {
         pair.second->deleteBuffers();
     }
-    for (const auto& geometry: m_debugGeometries) {
+    for (const auto& geometry: m_uniqueGeometries) {
         geometry->deleteBuffers();
     }
 }

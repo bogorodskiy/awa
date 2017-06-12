@@ -30,10 +30,12 @@ void InputComponent::setEntity(GameObject *gameObject) {
 void InputComponent::update(float deltaTime) {
     if (m_moveHandler.getActive()) {
         auto amplifier = 5.0f;
-        m_gameObject->addForce(m_moveHandler.getDirectionX() * amplifier, 0.0f, -m_moveHandler.getDirectionY() * amplifier);
+        physx::PxVec3 force{m_moveHandler.getDirectionX() * amplifier, 0.0f, -m_moveHandler.getDirectionY() * amplifier};
+        m_gameObject->addForce(force);
     }
     if (m_actionHandler.getAndResetTouched()) {
-        m_gameObject->addImpulse(0.0f, 4.0f, 0.0f);
+        physx::PxVec3 impulse{0.0f, 4.0f, 0.0f};
+        m_gameObject->addImpulse(impulse);
     }
 }
 

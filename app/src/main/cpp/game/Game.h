@@ -12,12 +12,20 @@
 #include "PxPhysicsAPI.h"
 #include "Room.h"
 
-class Game : public AndroidGame {
+class Game : public AndroidGame, public physx::PxSimulationEventCallback {
 public:
     Game(struct android_app *app);
     virtual ~Game();
     virtual void update(float deltaTime) override;
     virtual void render() override;
+
+    // PxSimulationEventCallback
+    virtual void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) override;
+    virtual void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) override;
+    virtual void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) {};
+    virtual void onWake(physx::PxActor** actors, physx::PxU32 count) {};
+    virtual void onSleep(physx::PxActor** actors, physx::PxU32 count) {};
+    virtual void onAdvance(const physx::PxRigidBody*const* bodyBuffer, const physx::PxTransform* poseBuffer, const physx::PxU32 count) {};
 
 protected:
     virtual void onPause() override;
@@ -41,6 +49,7 @@ private:
     physx::PxPhysics* m_pxPhysics;
     physx::PxScene* m_pxScene;
     physx::PxReal m_pxTimestep;
+    physx::PxShape** m_pxShapeBuffer;
 
     Shader m_shader;
     Room m_room;

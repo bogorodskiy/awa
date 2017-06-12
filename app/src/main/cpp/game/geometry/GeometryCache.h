@@ -10,7 +10,7 @@ class GeometryCache {
 public:
     static GeometryCache* getInstance();
     Geometry* getSphere();
-    Geometry* getPlane();
+    Geometry* getPlane(float width, float height);
     Geometry* getLine(glm::vec3 start, glm::vec3 end);
     void connect();
     void disconnect();
@@ -19,7 +19,7 @@ private:
         SPHERE, PLANE
     };
     std::map<GeometryType, Geometry*> m_geometries;
-    std::vector<Geometry*> m_debugGeometries;
+    std::vector<Geometry*> m_uniqueGeometries;
     bool m_graphicsReady;
 
     GeometryCache();

@@ -13,7 +13,7 @@ public:
     virtual void initBuffers() override;
 
 private:
-    Plane(int size);
+    Plane(float width, float height);
     ~Plane();
 
     GLfloat* m_vertices;

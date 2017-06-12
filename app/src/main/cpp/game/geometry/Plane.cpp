@@ -1,6 +1,6 @@
 #include "Plane.h"
 
-Plane::Plane(int size) : Geometry::Geometry(),
+Plane::Plane(float width, float height) : Geometry::Geometry(),
                  m_vertices(nullptr),
                  m_indices(nullptr),
                  m_normals(nullptr)
@@ -23,23 +23,24 @@ Plane::Plane(int size) : Geometry::Geometry(),
     m_normals[1] = 0.0f;
     m_normals[2] = 0.0f;
 
-    auto halfSize = size / 2.0f;
+    auto halfWidth = width / 2.0f;
+    auto halfHeight = height / 2.0f;
 
     m_vertices[0] = 0;
-    m_vertices[1] = halfSize;
-    m_vertices[2] = halfSize;
+    m_vertices[1] = halfHeight;
+    m_vertices[2] = halfWidth;
 
     m_vertices[3] = 0;
-    m_vertices[4] = -halfSize;
-    m_vertices[5] = halfSize;
+    m_vertices[4] = -halfHeight;
+    m_vertices[5] = halfWidth;
 
     m_vertices[6] = 0;
-    m_vertices[7] = -halfSize;
-    m_vertices[8] = -halfSize;
+    m_vertices[7] = -halfHeight;
+    m_vertices[8] = -halfWidth;
 
     m_vertices[9] = 0;
-    m_vertices[10] = halfSize;
-    m_vertices[11] = -halfSize;
+    m_vertices[10] = halfHeight;
+    m_vertices[11] = -halfWidth;
 }
 
 Plane::~Plane() {
