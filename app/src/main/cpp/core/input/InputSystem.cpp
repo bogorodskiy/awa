@@ -8,20 +8,20 @@ InputSystem::InputSystem():
 
 }
 
-void InputSystem::initialize(TouchLayer *touchLayer) {
+void InputSystem::initialize(TouchLayer* touchLayer, Camera* camera) {
     m_components = std::make_unique<InputComponent[]>(MAX_ENTITIES);
 
     m_touchLayer = touchLayer;
     for (int i = 0; i < MAX_ENTITIES; i++) {
-        m_components[i].connect(touchLayer);
+        m_components[i].connect(touchLayer, camera);
     }
 }
 
-void InputSystem::update(float deltaTime) {
+void InputSystem::update(float dt) {
     for (int i = 0; i < m_numAddedComponents; i++) {
         auto& component = m_components[i];
         if (component.active) {
-            component.update(deltaTime);
+            component.update(dt);
         }
     }
 }

@@ -14,11 +14,13 @@ public:
     ~Room();
 
     void connect(physx::PxPhysics* physics, physx::PxScene* scene);
-    void initialize();
+    void initialize(float width, float height, float depth);
     std::vector<a_Side>& getElements();
+    physx::PxVec3 getBounds();
 private:
 
     std::vector<a_Side> m_sidePairs;
+    physx::PxVec3 m_bounds;
 
     physx::PxPhysics* m_pxPhysics;
     physx::PxScene* m_pxScene;

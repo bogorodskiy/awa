@@ -65,6 +65,21 @@ void GameObject::addImpulse(physx::PxVec3 force) {
     m_pxActor->addForce(force, physx::PxForceMode::eIMPULSE);
 }
 
+physx::PxVec3 GameObject::getGravity() const {
+    return m_gravity;
+}
+
+void GameObject::setGravity(float x, float y, float z) {
+    m_gravity.x = x;
+    m_gravity.y = y;
+    m_gravity.z = z;
+}
+
 void GameObject::applyGravity() {
     addForce(m_gravity);
+}
+
+void GameObject::stop() {
+    m_pxActor->setLinearVelocity({0.0f, 0.0f, 0.0f});
+    m_pxActor->setAngularVelocity({0.0f, 0.0f, 0.0f});
 }

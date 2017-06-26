@@ -4,6 +4,7 @@
 #include "../../core/gameplay/GameObject.h"
 #include "TouchInputHandler.h"
 #include "TouchLayer.h"
+#include "../../game/Camera.h"
 
 class InputComponent {
 public:
@@ -12,16 +13,18 @@ public:
     bool active;
     int index;
 
-    void connect(TouchLayer* touchLayer);
+    void connect(TouchLayer* touchLayer, Camera* camera);
     void setEntity(GameObject* gameObject);
-    void update(float deltaTime);
+    void update(float dt);
     void releaseEntity();
 private:
     TouchInputHandler m_moveHandler;
+    TouchInputHandler m_cameraHandler;
     TouchInputHandler m_actionHandler;
 
     GameObject* m_gameObject;
     TouchLayer* m_touchLayer;
+    Camera* m_camera;
 };
 
 

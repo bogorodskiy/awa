@@ -9,7 +9,8 @@ class TouchInputHandler {
 public:
     enum class TouchInputType {
         STICK,
-        BUTTON
+        BUTTON,
+        POINTER
     };
 
     TouchInputHandler(TouchInputType type, int zIndex);
@@ -40,6 +41,9 @@ private:
     float m_directionY;
     bool m_touched;
     bool m_released;
+
+    float m_prevX;
+    float m_prevY;
 };
 
 

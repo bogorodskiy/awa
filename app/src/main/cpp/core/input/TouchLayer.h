@@ -24,6 +24,7 @@ private:
     float m_scaleFactor;
     std::map<int, std::vector<TouchInputHandler*>> m_touchHandlersByZIndex;
     std::map<int32_t, TouchInputHandler*> m_handlerByPointerId;
+    std::vector<int32_t> m_pointers;
     int m_minZIndex;
     int m_maxZIndex;
 

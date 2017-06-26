@@ -8,7 +8,6 @@ Game::Game(struct android_app *app) :
         m_ball(nullptr),
         m_screenWidth(1920),
         m_screenHeight(1080),
-        m_cameraAngle(0.0f),
         m_xAxis(nullptr),
         m_yAxis(nullptr),
         m_zAxis(nullptr),
@@ -16,7 +15,8 @@ Game::Game(struct android_app *app) :
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
         m_pxTimestep(1.0f/60.0f),
-        m_pxShapeBuffer(nullptr)
+        m_pxShapeBuffer(nullptr),
+        m_ball2(nullptr)
 {
     initPhysX();
     initLevel();
@@ -24,8 +24,25 @@ Game::Game(struct android_app *app) :
 
 Game::~Game()
 {
+    finalizeLevel();
     finalizePhysX();
     m_inputSystem.removeAllEntities();
+}
+
+// PHYSX CONTACT FILTER
+
+physx::PxFilterFlags GameContactReportFilterShader(
+        physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
+        physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
+        physx::PxPairFlags& pairFlags, const void* constantBlock, physx::PxU32 constantBlockSize)
+{
+    pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT
+                | physx::PxPairFlag::eNOTIFY_TOUCH_FOUND
+                //| physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS
+                | physx::PxPairFlag::eNOTIFY_TOUCH_LOST
+                | physx::PxPairFlag::eNOTIFY_CONTACT_POINTS;
+
+    return physx::PxFilterFlag::eDEFAULT;
 }
 
 void Game::initPhysX() {
@@ -41,8 +58,6 @@ void Game::initPhysX() {
     }
     LOGI("PxCreateFoundation success!");
 
-    physx::PxTolerancesScale tolerance;
-
     m_pxPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *m_pxFoundation, physx::PxTolerancesScale() );
     if (!m_pxPhysics) {
         LOGI("PxCreatePhysics failed!");
@@ -50,8 +65,7 @@ void Game::initPhysX() {
     }
     LOGI("PxCreatePhysics success!");
 
-    physx::PxSceneDesc sceneDescription(tolerance);
-    sceneDescription.simulationEventCallback = this;
+    physx::PxSceneDesc sceneDescription(m_pxPhysics->getTolerancesScale());
     if (!sceneDescription.cpuDispatcher) {
         physx::PxDefaultCpuDispatcher* mCpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
         if(!mCpuDispatcher) {
@@ -63,6 +77,13 @@ void Game::initPhysX() {
     if (!sceneDescription.filterShader) {
         sceneDescription.filterShader = gDefaultFilterShader;
     }
+    sceneDescription.simulationEventCallback = this;
+    sceneDescription.filterShader = GameContactReportFilterShader;
+    sceneDescription.flags |= physx::PxSceneFlag::eENABLE_PCM;
+    sceneDescription.flags |= physx::PxSceneFlag::eENABLE_STABILIZATION;
+    sceneDescription.flags |= physx::PxSceneFlag::eENABLE_ACTIVETRANSFORMS;
+    sceneDescription.flags |= physx::PxSceneFlag::eSUPPRESS_EAGER_SCENE_QUERY_REFIT;
+    sceneDescription.flags |= physx::PxSceneFlag::eENABLE_KINEMATIC_PAIRS;
 
     m_pxScene = m_pxPhysics->createScene(sceneDescription);
     if (!m_pxScene) {
@@ -96,10 +117,13 @@ void Game::initLevel()
 
     m_initialized = true;
 
-    m_ball = createBall();
+    m_ball = createBall(0, 0.0f, 3.0f, 0.0f);
 
-    m_inputSystem.initialize(&inputTouchLayer);
-    m_inputSystem.addEntity(m_ball.get());
+    // TODO: remove test
+    m_ball2 = createBall(1, 3.0f, 4.0f, 3.0f);
+
+    m_inputSystem.initialize(&inputTouchLayer, &m_camera);
+    m_inputSystem.addEntity(m_ball);
 
     m_xAxis = GeometryCache::getInstance()->getLine(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
     m_xAxis->setColor(1.0f, 0.0f, 0.0f, 1.0f);
@@ -110,10 +134,24 @@ void Game::initLevel()
     m_zAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
     m_zAxis->setColor(0.0f, 0.0f, 1.0f, 1.0f);
 
-    m_room.initialize();
+    m_room.initialize(20.0f, 10.0f, 30.0f);
+
+    m_camera.setPosition(0.0f, 5.0f, 20.0f);
+    m_camera.setUpVector(0.0f, 1.0f, 0.0f);
+    m_camera.setDirection(0.0f, -1.0f, -20.0f);
+    m_camera.setTarget(m_ball);
+    auto roomBounds = m_room.getBounds();
+    m_camera.setRoomBounds(-roomBounds.x * 0.5f, roomBounds.x * 0.5f,
+                           -roomBounds.y * 0.5f, roomBounds.y * 0.5f,
+                           -roomBounds.z * 0.5f, roomBounds.z * 0.5f);
 }
 
-std::unique_ptr<GameObject> Game::createBall() {
+void Game::finalizeLevel() {
+    delete m_ball;
+    delete m_ball2;
+}
+
+GameObject* Game::createBall(int id, float x, float y, float z) {
     physx::PxMaterial* material = m_pxPhysics->createMaterial(0.5, 0.5, 0.5);
 
     // Create sphere
@@ -123,12 +161,12 @@ std::unique_ptr<GameObject> Game::createBall() {
     quat.y = 0.0f;
     quat.z = 0.0f;
     quat.w = 1.0f;
-    physx::PxTransform transform(physx::PxVec3(0.0f, 3.0f, 0.0f), quat);
+    physx::PxTransform transform(physx::PxVec3(x, y, z), quat);
     physx::PxSphereGeometry pxGeometry(0.5);
     physx::PxRigidDynamic* actor = PxCreateDynamic(*m_pxPhysics, transform, pxGeometry, *material, density);
     // damping - friction or resistance, angular = rotation/spinning, linear = moving
-    //actor->setAngularDamping(0.75);
-    //actor->setLinearDamping(0.1);
+    actor->setAngularDamping(0.5);
+    actor->setLinearDamping(0.5);
     actor->setLinearVelocity(physx::PxVec3(0,0,0));
     if (!actor) {
         LOGI("create actor failed!");
@@ -139,7 +177,7 @@ std::unique_ptr<GameObject> Game::createBall() {
     geometry->setPrimitive(GL_LINES);
     geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    auto result = std::make_unique<GameObject>(0, geometry, actor, m_pxShapeBuffer);
+    auto result = new GameObject(id, geometry, actor, m_pxShapeBuffer);
     return result;
 }
 
@@ -198,56 +236,37 @@ void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
     mat[15] = 1;
 }
 
-void Game::update(float deltaTime) {
-    AndroidGame::update(deltaTime);
-
-//    m_cameraAngle += 0.5;
-//    if (m_cameraAngle >= 360.0f) {
-//        m_cameraAngle = 0.0f;
-//    }
-
-    m_inputSystem.update(deltaTime);
+void Game::update(float dt) {
+    m_inputSystem.update(dt);
 
     m_ball->applyGravity();
+    m_ball2->applyGravity();
 
-    m_pxScene->simulate(deltaTime);
+    m_pxScene->simulate(dt);
+
+    // TODO: measure execution time
     // wait for simulation to finish(separate thread)
     while (!m_pxScene->fetchResults()) {
-
     }
 
-    // TODO: remove test
-    physx::PxU32 numActiveActors = 0;
-    auto activeActors = m_pxScene->getActiveActors(numActiveActors);
-    for (physx::PxU32 i = 0; i < numActiveActors; ++i)
-    {
-        GameObject* gameObject = static_cast<GameObject*>(activeActors[i]->userData);
-        //physx::PxSimulationEventCallback
-    }
+    m_camera.update(dt);
 }
 
 void Game::render() {
     AndroidGame::render();
 
-    // DIAGONAL
-//    glm::vec3 camPositionVector(0.0f, 4.0f, 10.0f);
-//    glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
-//    glm::vec3 camDirectionVector(0.0f, -1.0f, -1.0f);
+    const auto& camPositionVector = m_camera.getPosition();
+    const auto& camUpVector = m_camera.getUpVector();
+    const auto& camDirectionVector = m_camera.getDirection();
 
-    // SIDE FROM X
-    float distance = 20.0f;
-    auto radians = glm::radians(m_cameraAngle);
-    //glm::vec3 camPositionVector(glm::sin(radians) * distance, 5.0f, glm::cos(radians) * distance);
-    glm::vec3 camPositionVector(0.0f, 5.0f, distance);
-    glm::vec3 camUpVector(0.0f, 1.0f, 0.0f);
-    glm::vec3 camDirectionVector(camPositionVector.x * -1.0f, 0.0f, camPositionVector.z * -1.0f);
-    //glm::vec3 camDirectionVector(0.0f, 10.0f, -10.0f);
-
-    m_viewMatrix = glm::lookAt(camPositionVector, camDirectionVector, camUpVector);
+    m_viewMatrix = glm::lookAt(glm::vec3{camPositionVector.x, camPositionVector.y, camPositionVector.z},
+                               glm::vec3{camDirectionVector.x, camDirectionVector.y, camDirectionVector.z},
+                               glm::vec3{camUpVector.x, camUpVector.y, camUpVector.z});
 
     m_shader.bind();
 
     renderPxActor(m_ball->getActor(), m_ball->getGeometry());
+    renderPxActor(m_ball2->getActor(), m_ball2->getGeometry());
     for (auto& elementPair : m_room.getElements()) {
         renderPxActor(elementPair.second, elementPair.first);
     }
@@ -278,21 +297,18 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
     }
 
     actor->getShapes(m_pxShapeBuffer, nShapes);
-    while (nShapes--)
-        {
-        auto shape = m_pxShapeBuffer[nShapes];
-        physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
-        physx::PxMat33 mat3 = physx::PxMat33(transform.q);
-        float mat4[16];
-        getColumnMajor(mat3, transform.p, mat4);
+    auto shape = m_pxShapeBuffer[0];
+    physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
+    physx::PxMat33 mat3 = physx::PxMat33(transform.q);
+    float mat4[16];
+    getColumnMajor(mat3, transform.p, mat4);
 
-        auto modelMatrix = glm::make_mat4(mat4);
-        auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+    auto modelMatrix = glm::make_mat4(mat4);
+    auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
 
-        m_shader.beginRender(geometry);
-        m_shader.render(&mvpMatrix, &modelMatrix);
-        m_shader.endRender();
-    }
+    m_shader.beginRender(geometry);
+    m_shader.render(&mvpMatrix, &modelMatrix);
+    m_shader.endRender();
 }
 
 void Game::onResize() {
@@ -305,13 +321,55 @@ void Game::onResize() {
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);
 }
 
+// called before actors moved(detected early on during the simulation)
 void Game::onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
-    // TODO
+/*
+    const physx::PxU32 bufferSize = 64;
+    physx::PxContactPairPoint contacts[bufferSize];
+
+    for (physx::PxU32 i = 0; i < nbPairs; i++)
+    {
+        const physx::PxContactPair& contactPair = pairs[i];
+
+        if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
+        {
+            auto actor1 = pairHeader.actors[0];
+            auto actor2 = pairHeader.actors[1];
+            GameObject* player = nullptr;
+            if (isPlayer(actor1) && isPlane(actor2)) {
+                player = static_cast<GameObject*>(actor1->userData);
+            }
+            else if (isPlayer(actor2) && isPlane(actor1)) {
+                player = static_cast<GameObject*>(actor1->userData);
+            }
+
+            if (player) {
+                auto numContacts = contactPair.extractContacts(contacts, bufferSize);
+                for (physx::PxU32 j = 0; j < numContacts; j++) {
+                    auto point = contacts[j].position;
+                    auto playerPosition = player->getActor()->getGlobalPose().p;
+                    auto contactVec = point - playerPosition;
+                    contactVec.normalize();
+                    player->setGravity(contactVec.x, contactVec.y, contactVec.z);
+                    break;
+                }
+            }
+        }
+    }
+    */
 }
 
 void Game::onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {
     // TODO
     // called from shapes that marked as triggers
+}
+
+bool Game::isPlayer(physx::PxRigidActor* actor) {
+    return actor->getType() == physx::PxActorType::eRIGID_DYNAMIC;
+}
+
+bool Game::isPlane(physx::PxRigidActor* actor) {
+    return actor->getType() == physx::PxActorType::eRIGID_STATIC;
 }
 
 void Game::onPause() {
@@ -348,4 +406,3 @@ char* Game::readAsset(const std::string& path) {
     AAsset_close(asset);
     return buffer;
 }
-

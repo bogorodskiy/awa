@@ -4,12 +4,13 @@
 #include <memory>
 #include "TouchLayer.h"
 #include "InputComponent.h"
+#include "../../game/Camera.h"
 
 class InputSystem {
 public:
     InputSystem();
-    void initialize(TouchLayer *touchLayer);
-    void update(float deltaTime);
+    void initialize(TouchLayer* touchLayer, Camera* camera);
+    void update(float dt);
     void addEntity(GameObject* entity);
     void clearComponent(int index);
     void removeAllEntities();

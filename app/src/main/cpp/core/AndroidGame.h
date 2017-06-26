@@ -31,7 +31,7 @@ public:
     bool getIsAnimating();
 
     void startGameLoop();
-    virtual void update(float deltaTime);
+    virtual void update(float dt) = 0;
     virtual void render();
 
     void handleCommand(int32_t cmd);

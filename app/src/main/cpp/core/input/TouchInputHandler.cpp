@@ -67,34 +67,41 @@ void TouchInputHandler::start(int32_t pointerId, float x, float y) {
     m_startX = x;
     m_startY = y;
 
-    std::string name = (m_type == TouchInputHandler::TouchInputType::STICK) ? "Move handler " : " Attack handler ";
-    name += " start";
-    LOGD(name.c_str());
+    m_prevX = x;
+    m_prevY = y;
 
     m_touched = true;
     m_released = false;
 
-    LOGD("++ START");
+    LOGD("TOUCH START AT %i", m_zIndex);
 }
 
 void TouchInputHandler::move(float x, float y) {
     m_directionX = x - m_startX;
     m_directionY = y - m_startY;
+
+    //m_directionX = x - m_prevX;
+    //m_directionY = y - m_prevY;
+
+    //m_prevX = x;
+    //m_prevY = y;
+
+    // normalize
     float maxDirection = std::max(std::abs(m_directionX), std::abs(m_directionY));
-    maxDirection = (maxDirection == 0.0f) ? 1.0f : maxDirection;
-    m_directionX = m_directionX / maxDirection;
-    m_directionY = m_directionY / maxDirection;
+    maxDirection = (maxDirection == 0.0f) ? 1.0f : 1.0f / maxDirection;
+    m_directionX = m_directionX * maxDirection;
+    m_directionY = m_directionY * maxDirection;
+
+    //LOGD("TOUCH MOVE AT %i", m_zIndex);
 }
 
 void TouchInputHandler::end() {
     m_pointerId = -1;
 
-    std::string name = (m_type == TouchInputHandler::TouchInputType::STICK) ? "Move handler " : " Attack handler ";
-    name += " end";
-    LOGD(name.c_str());
-
     m_touched = false;
     m_released = true;
+
+    LOGD("TOUCH END AT %i", m_zIndex);
 }
 
 TouchInputHandler::~TouchInputHandler() {

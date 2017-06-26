@@ -26,47 +26,63 @@ bool TouchLayer::processInputEvent(AInputEvent* event) {
     // TODO: move away android logic
     int32_t type = AInputEvent_getType(event);
     if (type == AINPUT_EVENT_TYPE_MOTION) {
-        int32_t action = AMotionEvent_getAction(event);
-        int32_t flags = action & AMOTION_EVENT_ACTION_MASK;
-        int32_t pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-        int32_t pointerId = AMotionEvent_getPointerId(event, pointerIndex);
+        auto action = AMotionEvent_getAction(event);
+        auto numPointers = AMotionEvent_getPointerCount(event);
+        auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        auto pointerId = AMotionEvent_getPointerId(event, pointerIndex);
         float x = AMotionEvent_getX(event, pointerIndex) * m_scaleFactor;
         float y = m_screenHeight - AMotionEvent_getY(event, pointerIndex) * m_scaleFactor;
 
+        LOGD("processInputEvent");
+
         TouchInputHandler* handler;
+        auto flags = action & AMOTION_EVENT_ACTION_MASK;
         switch (flags) {
             case AMOTION_EVENT_ACTION_DOWN:
+            {
+                LOGD("AMOTION_EVENT_ACTION_DOWN");
+                break;
+            }
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             {
+                LOGD("AMOTION_EVENT_ACTION_POINTER_DOWN");
                 tryStartHandlerForTouch(pointerId, x, y);
                 break;
             }
             case AMOTION_EVENT_ACTION_MOVE:
             {
+                //LOGD("MOVE EVENT POINTER %i", pointerId);
                 handler = m_handlerByPointerId[pointerId];
                 if (handler != nullptr) {
-                    if (handler->getActive() && !handler->contains(x, y, m_screenWidth, m_screenHeight)) {
-                        handler->end();
+                    if (handler->getActive()) {
+                        if (!handler->contains(x, y, m_screenWidth, m_screenHeight)) {
+                            handler->end();
+                        }
+                        else {
+                            handler->move(x, y);
+                        }
                     }
-                    else if (!handler->getActive()&& handler->contains(x, y, m_screenWidth, m_screenHeight)) {
+                    else if(handler->contains(x, y, m_screenWidth, m_screenHeight)) {
                         handler->start(pointerId, x, y);
-                    }
-                    else {
-                        handler->move(x, y);
                     }
                 }
                 break;
             }
-            case AMOTION_EVENT_ACTION_UP:
-            case AMOTION_EVENT_ACTION_POINTER_UP:
-            case AMOTION_EVENT_ACTION_CANCEL:
-            {
+            case AMOTION_EVENT_ACTION_UP: {
+                LOGD("AMOTION_EVENT_ACTION_UP");
+            }
+            case AMOTION_EVENT_ACTION_POINTER_UP: {
+                LOGD("AMOTION_EVENT_ACTION_POINTER_UP");
                 handler = m_handlerByPointerId[pointerId];
                 if (handler != nullptr) {
                     handler->end();
                     m_handlerByPointerId.erase(pointerId);
                 }
                 break;
+            }
+            case AMOTION_EVENT_ACTION_CANCEL:
+            {
+                LOGD("AMOTION_EVENT_ACTION_CANCEL");
             }
             default:
             {

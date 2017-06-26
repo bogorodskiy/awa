@@ -16,7 +16,10 @@ public:
     void setPosition(float x, float y, float z);
     void addForce(physx::PxVec3 force);
     void addImpulse(physx::PxVec3 force);
+    physx::PxVec3 getGravity() const;
+    void setGravity(float x, float y, float z);
     void applyGravity();
+    void stop();
 private:
     unsigned int m_id;
     Geometry* m_geometry;
