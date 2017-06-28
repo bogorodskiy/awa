@@ -28,56 +28,43 @@ bool TouchLayer::processInputEvent(AInputEvent* event) {
     if (type == AINPUT_EVENT_TYPE_MOTION) {
         auto action = AMotionEvent_getAction(event);
         auto numPointers = AMotionEvent_getPointerCount(event);
-        auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-        auto pointerId = AMotionEvent_getPointerId(event, pointerIndex);
-        float x = AMotionEvent_getX(event, pointerIndex) * m_scaleFactor;
-        float y = m_screenHeight - AMotionEvent_getY(event, pointerIndex) * m_scaleFactor;
 
         LOGD("processInputEvent");
 
+        auto updateMove = false;
         TouchInputHandler* handler;
         auto flags = action & AMOTION_EVENT_ACTION_MASK;
         switch (flags) {
+            // first touch
             case AMOTION_EVENT_ACTION_DOWN:
             {
                 LOGD("AMOTION_EVENT_ACTION_DOWN");
+                handleDownEvent(event, 0);
                 break;
             }
+            // second+ touch with spec index
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             {
                 LOGD("AMOTION_EVENT_ACTION_POINTER_DOWN");
-                tryStartHandlerForTouch(pointerId, x, y);
+                auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+                handleDownEvent(event, pointerIndex);
                 break;
             }
             case AMOTION_EVENT_ACTION_MOVE:
             {
+                updateMove = true;
                 //LOGD("MOVE EVENT POINTER %i", pointerId);
-                handler = m_handlerByPointerId[pointerId];
-                if (handler != nullptr) {
-                    if (handler->getActive()) {
-                        if (!handler->contains(x, y, m_screenWidth, m_screenHeight)) {
-                            handler->end();
-                        }
-                        else {
-                            handler->move(x, y);
-                        }
-                    }
-                    else if(handler->contains(x, y, m_screenWidth, m_screenHeight)) {
-                        handler->start(pointerId, x, y);
-                    }
-                }
                 break;
             }
+            // all touches ended
             case AMOTION_EVENT_ACTION_UP: {
                 LOGD("AMOTION_EVENT_ACTION_UP");
             }
+            // touch ended with spec index
             case AMOTION_EVENT_ACTION_POINTER_UP: {
                 LOGD("AMOTION_EVENT_ACTION_POINTER_UP");
-                handler = m_handlerByPointerId[pointerId];
-                if (handler != nullptr) {
-                    handler->end();
-                    m_handlerByPointerId.erase(pointerId);
-                }
+                auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+                handleUpEvent(event, pointerIndex);
                 break;
             }
             case AMOTION_EVENT_ACTION_CANCEL:
@@ -87,6 +74,17 @@ bool TouchLayer::processInputEvent(AInputEvent* event) {
             default:
             {
                 return false;
+            }
+        }
+
+        if (updateMove) {
+            for (auto id : m_activePointers) {
+                auto index = findIndex(event, id);
+                if (index != -1) {
+                    float x = AMotionEvent_getX(event, index) * m_scaleFactor;
+                    float y = m_screenHeight - AMotionEvent_getY(event, index) * m_scaleFactor;
+                    handleMoveEvent(event, id, x, y);
+                }
             }
         }
 
@@ -129,7 +127,14 @@ bool TouchLayer::removeTouchHandler(TouchInputHandler* handler) {
     return false;
 }
 
-void TouchLayer::tryStartHandlerForTouch(int32_t pointerId, float x, float y) {
+void TouchLayer::handleDownEvent(const AInputEvent* event, size_t pointerIndex) {
+    auto pointerId = AMotionEvent_getPointerId(event, pointerIndex);
+    m_activePointers.push_back(pointerId);
+    LOGD("++ ACTIVE POINTER %i Added", pointerId);
+
+    float x = AMotionEvent_getX(event, pointerIndex) * m_scaleFactor;
+    float y = m_screenHeight - AMotionEvent_getY(event, pointerIndex) * m_scaleFactor;
+
     for (int index = m_maxZIndex; index >= m_minZIndex; index--) {
         std::vector<TouchInputHandler*>& handlers = m_touchHandlersByZIndex[index];
         for (auto& handler : handlers) {
@@ -140,6 +145,50 @@ void TouchLayer::tryStartHandlerForTouch(int32_t pointerId, float x, float y) {
             }
         }
     }
+}
+
+void TouchLayer::handleMoveEvent(const AInputEvent* event, int32_t pointerId, float x, float y) {
+    if (m_handlerByPointerId.find(pointerId) != m_handlerByPointerId.end()) {
+        auto handler = m_handlerByPointerId[pointerId];
+
+        if (handler->getActive()) {
+            if (!handler->contains(x, y, m_screenWidth, m_screenHeight)) {
+                handler->end();
+            }
+            else {
+                handler->move(x, y);
+            }
+        }
+        else if(handler->contains(x, y, m_screenWidth, m_screenHeight)) {
+            handler->start(pointerId, x, y);
+        }
+    }
+}
+
+void TouchLayer::handleUpEvent(const AInputEvent* event, size_t pointerIndex) {
+    auto pointerId = AMotionEvent_getPointerId(event, pointerIndex);
+    if (m_handlerByPointerId.find(pointerId) != m_handlerByPointerId.end()) {
+        auto handler = m_handlerByPointerId[pointerId];
+        handler->end();
+        m_handlerByPointerId.erase(pointerId);
+    }
+    for (auto it = m_activePointers.begin(); it != m_activePointers.end(); ++it) {
+        if (*it == pointerId) {
+            LOGD("++ ACTIVE POINTER %i Removed", pointerId);
+            m_activePointers.erase(it);
+            break;
+        }
+    }
+}
+
+int32_t TouchLayer::findIndex(const AInputEvent* event, int32_t pointerId) {
+    auto count = AMotionEvent_getPointerCount(event);
+    for (auto i = 0; i < count; ++i) {
+        if (pointerId == AMotionEvent_getPointerId(event, i)) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 TouchLayer::~TouchLayer() {
