@@ -23,14 +23,9 @@ void TouchLayer::updateScreenSize(const int &screenWidth, const int &screenHeigh
 }
 
 bool TouchLayer::processInputEvent(AInputEvent* event) {
-    // TODO: move away android logic
-    int32_t type = AInputEvent_getType(event);
+    auto type = AInputEvent_getType(event);
     if (type == AINPUT_EVENT_TYPE_MOTION) {
         auto action = AMotionEvent_getAction(event);
-        auto numPointers = AMotionEvent_getPointerCount(event);
-
-        LOGD("processInputEvent");
-
         auto updateMove = false;
         TouchInputHandler* handler;
         auto flags = action & AMOTION_EVENT_ACTION_MASK;
@@ -38,14 +33,14 @@ bool TouchLayer::processInputEvent(AInputEvent* event) {
             // first touch
             case AMOTION_EVENT_ACTION_DOWN:
             {
-                LOGD("AMOTION_EVENT_ACTION_DOWN");
+                //LOGD("AMOTION_EVENT_ACTION_DOWN");
                 handleDownEvent(event, 0);
                 break;
             }
             // second+ touch with spec index
             case AMOTION_EVENT_ACTION_POINTER_DOWN:
             {
-                LOGD("AMOTION_EVENT_ACTION_POINTER_DOWN");
+                //LOGD("AMOTION_EVENT_ACTION_POINTER_DOWN");
                 auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
                 handleDownEvent(event, pointerIndex);
                 break;
@@ -58,18 +53,18 @@ bool TouchLayer::processInputEvent(AInputEvent* event) {
             }
             // all touches ended
             case AMOTION_EVENT_ACTION_UP: {
-                LOGD("AMOTION_EVENT_ACTION_UP");
+                //LOGD("AMOTION_EVENT_ACTION_UP");
             }
             // touch ended with spec index
             case AMOTION_EVENT_ACTION_POINTER_UP: {
-                LOGD("AMOTION_EVENT_ACTION_POINTER_UP");
+                //LOGD("AMOTION_EVENT_ACTION_POINTER_UP");
                 auto pointerIndex = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
                 handleUpEvent(event, pointerIndex);
                 break;
             }
             case AMOTION_EVENT_ACTION_CANCEL:
             {
-                LOGD("AMOTION_EVENT_ACTION_CANCEL");
+                //LOGD("AMOTION_EVENT_ACTION_CANCEL");
             }
             default:
             {
@@ -130,7 +125,6 @@ bool TouchLayer::removeTouchHandler(TouchInputHandler* handler) {
 void TouchLayer::handleDownEvent(const AInputEvent* event, size_t pointerIndex) {
     auto pointerId = AMotionEvent_getPointerId(event, pointerIndex);
     m_activePointers.push_back(pointerId);
-    LOGD("++ ACTIVE POINTER %i Added", pointerId);
 
     float x = AMotionEvent_getX(event, pointerIndex) * m_scaleFactor;
     float y = m_screenHeight - AMotionEvent_getY(event, pointerIndex) * m_scaleFactor;
@@ -174,7 +168,6 @@ void TouchLayer::handleUpEvent(const AInputEvent* event, size_t pointerIndex) {
     }
     for (auto it = m_activePointers.begin(); it != m_activePointers.end(); ++it) {
         if (*it == pointerId) {
-            LOGD("++ ACTIVE POINTER %i Removed", pointerId);
             m_activePointers.erase(it);
             break;
         }

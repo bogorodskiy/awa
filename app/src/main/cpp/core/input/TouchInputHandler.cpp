@@ -3,6 +3,8 @@
 #include "TouchInputHandler.h"
 
 TouchInputHandler::TouchInputHandler(TouchInputHandler::TouchInputType type, int zIndex):
+        m_touched(false),
+        m_released(true),
         m_type(type),
         m_zIndex(zIndex),
         m_pointerId(-1),
@@ -10,8 +12,10 @@ TouchInputHandler::TouchInputHandler(TouchInputHandler::TouchInputType type, int
         m_startY(0.0f),
         m_directionX(0.0f),
         m_directionY(0.0f),
-        m_touched(false),
-        m_released(true)
+        m_deltaX(0.0f),
+        m_deltaY(0.0f),
+        m_prevX(0.0f),
+        m_prevY(0.0f)
 {
     m_bounds.alignHorizontal = ScreenBounds::AlignHorizontal::LEFT;
     m_bounds.alignVertical = ScreenBounds::AlignVertical::BOTTOM;
@@ -49,6 +53,14 @@ float TouchInputHandler::getDirectionY() {
     return m_directionY;
 }
 
+float TouchInputHandler::getMoveDeltaX() {
+    return m_deltaX;
+}
+
+float TouchInputHandler::getMoveDeltaY() {
+    return m_deltaY;
+}
+
 void TouchInputHandler::updateBounds(int width, int height,
                                      ScreenBounds::AlignHorizontal hAlign,
                                      ScreenBounds::AlignVertical vAlign) {
@@ -72,19 +84,17 @@ void TouchInputHandler::start(int32_t pointerId, float x, float y) {
 
     m_touched = true;
     m_released = false;
-
-    LOGD("TOUCH START AT %i", m_zIndex);
 }
 
 void TouchInputHandler::move(float x, float y) {
     m_directionX = x - m_startX;
     m_directionY = y - m_startY;
 
-    //m_directionX = x - m_prevX;
-    //m_directionY = y - m_prevY;
+    m_deltaX = x - m_prevX;
+    m_deltaY = y - m_prevY;
 
-    //m_prevX = x;
-    //m_prevY = y;
+    m_prevX = x;
+    m_prevY = y;
 
     // normalize
     float maxDirection = std::max(std::abs(m_directionX), std::abs(m_directionY));
@@ -100,8 +110,6 @@ void TouchInputHandler::end() {
 
     m_touched = false;
     m_released = true;
-
-    LOGD("TOUCH END AT %i", m_zIndex);
 }
 
 TouchInputHandler::~TouchInputHandler() {

@@ -3,6 +3,7 @@
 
 
 #include <foundation/PxVec4.h>
+#include <foundation/PxVec2.h>
 #include "../core/gameplay/GameObject.h"
 
 class Camera {
@@ -18,12 +19,14 @@ public:
     void setRoomBounds(float minX, float maxX,
                        float minY, float maxY,
                        float minZ, float maxZ);
-    void rotateH(float value);
+    void rotateH(float degree);
     void update(float dt);
 private:
-    static const float MIN_DISTANCE_FROM_TARGET;
-    static const float MAX_DISTANCE_FROM_TARGET;
+    static const float H_DISTANCE_FROM_TARGET;
+    static const float V_DISTANCE_FROM_TARGET;
+    static const float V_ANGLE_TAN;
 
+    bool m_rotationChanged;
     GameObject* m_target;
     float m_rotationH;
     physx::PxVec3 m_currentPosition;
@@ -32,6 +35,7 @@ private:
     physx::PxVec3 m_destDirection;
     physx::PxVec3 m_currentUpVector;
     physx::PxVec3 m_destUpVector;
+    physx::PxVec3 m_lastActorPosition;
     float m_roomBounds[6];
 };
 

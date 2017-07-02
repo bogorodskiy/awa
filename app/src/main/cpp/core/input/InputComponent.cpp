@@ -44,8 +44,9 @@ void InputComponent::update(float dt) {
         m_gameObject->addForce(force);
     }
     if (m_cameraHandler.getActive()) {
-        auto rotationDirection = -m_cameraHandler.getDirectionX();
-        m_camera->rotateH(rotationDirection);
+        auto amplifier = 0.4f;
+        auto deltaX = -m_cameraHandler.getMoveDeltaX() * amplifier;
+        m_camera->rotateH(deltaX);
     }
 }
 

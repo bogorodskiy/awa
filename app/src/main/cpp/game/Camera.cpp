@@ -1,10 +1,12 @@
 #include <algorithm>
 #include "Camera.h"
 
-const float Camera::MIN_DISTANCE_FROM_TARGET = 2.0f;
-const float Camera::MAX_DISTANCE_FROM_TARGET = 3.0f;
+const float Camera::H_DISTANCE_FROM_TARGET = 5.0f;
+const float Camera::V_DISTANCE_FROM_TARGET = 3.0f;
+const float Camera::V_ANGLE_TAN = Camera::V_DISTANCE_FROM_TARGET / Camera::H_DISTANCE_FROM_TARGET;
 
 Camera::Camera():
+    m_rotationChanged(false),
     m_target(nullptr),
     m_rotationH(0.0f),
     m_currentPosition(0.0f, 0.0f, 0.0f),
@@ -12,7 +14,8 @@ Camera::Camera():
     m_currentDirection(0.0f, 0.0f, 0.0f),
     m_destDirection(0.0f, 0.0f, 0.0f),
     m_currentUpVector(0.0f, 0.0f, 0.0f),
-    m_destUpVector(0.0f, 0.0f, 0.0f)
+    m_destUpVector(0.0f, 0.0f, 0.0f),
+    m_lastActorPosition(0.0f, 0.0f, 0.0f)
 {
 }
 
@@ -73,27 +76,66 @@ void Camera::setTarget(GameObject* target) {
     m_target = target;
 }
 
-void Camera::rotateH(float value) {
-    m_rotationH += value;
+void Camera::rotateH(float degree) {
+    m_rotationH += degree;
     // normalize to 0 - 360
-    m_rotationH = m_rotationH - std::floor(m_rotationH / 360.0f) * 360.0f;
+    static const auto one_div_threesixty = 1 / 360.0f;
+    m_rotationH = m_rotationH - std::floor(m_rotationH * one_div_threesixty) * 360.0f;
+    m_rotationChanged = true;
 }
 
 void Camera::update(float dt) {
     const auto& actorPosition = m_target->getActor()->getGlobalPose().p;
+    if (actorPosition == m_lastActorPosition && !m_rotationChanged) {
+        return;
+    }
+    m_lastActorPosition = actorPosition;
+    m_rotationChanged = false;
+
     const auto radians = glm::radians(m_rotationH);
-    auto cameraX = actorPosition.x + glm::sin(radians) * 5.0f;
-    auto cameraZ = actorPosition.z + glm::cos(radians) * 5.0f;
+    auto cameraX = actorPosition.x + glm::sin(radians) * H_DISTANCE_FROM_TARGET;
+    auto cameraZ = actorPosition.z + glm::cos(radians) * H_DISTANCE_FROM_TARGET;
 
-    //auto cameraPositionX = std::max(actorPosition.x, m_roomBounds[0]);
-    //cameraPositionX = std::min(cameraPositionX, m_roomBounds[1]);
+    physx::PxVec2 actorHPos{actorPosition.x, actorPosition.z};
+    physx::PxVec2 cameraPos{cameraX, cameraZ};
+    auto direction = cameraPos - actorHPos;
+    direction.normalize();
 
-    auto cameraPositionY = std::max(actorPosition.y + 3.0f, m_roomBounds[2]);
-    cameraPositionY = std::min(cameraPositionY, m_roomBounds[3]);
+    auto isOutOfBounds = false;
+    auto minX = m_roomBounds[0];
+    auto maxX = m_roomBounds[1];
+    auto distanceX = H_DISTANCE_FROM_TARGET;
+    if (cameraX < minX || cameraX > maxX) {
+        auto pointX = (cameraX < minX) ? minX - actorPosition.x : maxX - actorPosition.x;
+        auto divisor = (direction.x != 0) ? direction.x : 1.0f;
+        distanceX = std::abs(pointX / divisor);
+        isOutOfBounds = true;
+    }
 
-    //auto cameraPositionZ = std::max(actorPosition.z + 5.0f, m_roomBounds[4] - 10.0f);
-    //cameraPositionZ = std::min(cameraPositionZ, m_roomBounds[5] + 10.0f);
+    auto minZ = m_roomBounds[4];
+    auto maxZ = m_roomBounds[5];
+    auto distanceZ = H_DISTANCE_FROM_TARGET;
+    if (cameraZ < minZ || cameraZ > maxZ) {
+        auto pointZ = (cameraZ < minZ) ? minZ - actorPosition.z : maxZ - actorPosition.z;
+        auto divisor = (direction.y != 0) ? direction.y : 1.0f;
+        distanceZ = std::abs(pointZ / divisor);
+        isOutOfBounds = true;
+    }
 
-    setPosition(cameraX, cameraPositionY , cameraZ);
+    auto yDelta = V_DISTANCE_FROM_TARGET;
+    if (isOutOfBounds) {
+        auto distance = std::min(distanceX, distanceZ);
+        yDelta = distance * V_ANGLE_TAN;
+
+        cameraX = actorPosition.x + distance * direction.x;
+        cameraZ = actorPosition.z + distance * direction.y;
+    }
+
+    auto minY = m_roomBounds[2];
+    auto maxY = m_roomBounds[3];
+    auto cameraY = std::max(actorPosition.y + yDelta, minY);
+    cameraY = std::min(cameraY, maxY);
+
+    setPosition(cameraX, cameraY , cameraZ);
     setDirection(actorPosition.x, actorPosition.y, actorPosition.z);
 }
