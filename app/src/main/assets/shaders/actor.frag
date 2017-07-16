@@ -1,20 +1,35 @@
 #version 300 es
 precision mediump float;
 
-struct DirectionalLight
+const int MAX_POINT_LIGHTS = 4;
+
+struct BaseLight
 {
-    vec3 color;
+    float ambientIntensity;
     float diffuseIntensity;
-    vec3 direction;
+    vec3 color;
 };
 
-out vec4 fragColor;
+struct Attenuation
+{
+    float constantFactor;
+    float linearFactor;
+    float exponentialFactor;
+};
+
+struct PointLight
+{
+    BaseLight base;
+    Attenuation attenuation;
+    vec3 position;
+};
+
 in vec3 v_normal;
-uniform DirectionalLight u_directionalLight;
+uniform vec4 u_color;
+uniform int u_numPointLights;
+uniform PointLight u_pointLights[MAX_POINT_LIGHTS];
+out vec4 fragColor;
 
 void main() {
-    vec4 ambientColor = vec4(0.1, 0.1, 0.1, 1.0);
-    float diffuseFactor = max(dot(v_normal, u_directionalLight.direction), 0.0);
-    vec4 diffuseColor = vec4(u_directionalLight.color, 1.0) * u_directionalLight.diffuseIntensity * diffuseFactor;
-    fragColor = ambientColor + diffuseColor;
+    fragColor = vec4(0.1, 0.1, 0.1, 1.0);
 }

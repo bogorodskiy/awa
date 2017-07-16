@@ -71,8 +71,6 @@ private:
     GameObject* createBall(int id, float x, float y, float z);
     bool isPlayer(physx::PxRigidActor* actor);
     bool isPlane(physx::PxRigidActor* actor);
-    // TODO: create file manager
-    char* readAsset(const std::string& path);
 };
 
 

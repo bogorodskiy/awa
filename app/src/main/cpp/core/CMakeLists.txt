@@ -1,9 +1,5 @@
-add_subdirectory(gameplay)
-add_subdirectory(input)
+file(GLOB_RECURSE CPP_FILES "*.cpp")
 
-set(CORE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/AndroidGame.cpp
-			 ${CMAKE_CURRENT_SOURCE_DIR}/Shader.cpp
-			 ${CORE_GAMEPLAY_SRC}
-			 ${CORE_INPUT_SRC}
+set(CORE_SRC ${CPP_FILES}
 			 PARENT_SCOPE
     )

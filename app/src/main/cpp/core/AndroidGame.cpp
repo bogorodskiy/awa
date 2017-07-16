@@ -1,4 +1,5 @@
 #include "AndroidGame.h"
+#include "resource/ResourceManager.h"
 
 const float AndroidGame::MAX_DELTA_TIME = 0.05f;
 
@@ -12,7 +13,6 @@ static int onAppInput(struct android_app* app, AInputEvent* event) {
     return game->inputTouchLayer.processInputEvent(event) ? 1 : 0;
 }
 
-// TODO: Handle orientation changed (context destroyed)
 AndroidGame::AndroidGame(struct android_app *app) :
         m_app(app),
         m_surfaceWidth(0),
@@ -34,6 +34,7 @@ AndroidGame::AndroidGame(struct android_app *app) :
     }
 
     m_lastTime = getCurrentTime();
+    ResourceManager::getInstance().connect(m_app->activity->assetManager);
 }
 
 bool AndroidGame::getIsAnimating() {
@@ -68,11 +69,18 @@ void AndroidGame::startGameLoop() {
                 LOGD("Delta time > max delta, %f", deltaTime);
             }
             deltaTime = (deltaTime < 0.0f) ? 0.0f : (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
+
+
+
             update(deltaTime);
+
+
+
             if (preRender()) {
                 render();
                 postRender();
             }
+
         }
     }
 }

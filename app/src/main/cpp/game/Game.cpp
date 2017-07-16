@@ -1,6 +1,6 @@
 #include "Game.h"
-#include "geometry/Sphere.h"
 #include "geometry/GeometryCache.h"
+#include "../core/resource/ResourceManager.h"
 
 Game::Game(struct android_app *app) :
         AndroidGame(app),
@@ -182,29 +182,28 @@ GameObject* Game::createBall(int id, float x, float y, float z) {
 }
 
 void Game::startGraphics() {
-    static auto configured = false;
-    if (configured) {
-        // TODO:
-        LOGI("REconfigre openGL");
-    }
-    else {
-        configured = true;
-    }
-
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    char* vertexShader = readAsset("shaders/debug.vert");
-    char* fragmentShader = readAsset("shaders/debug.frag");
+    auto& resourceManager = ResourceManager::getInstance();
+
+    char* vertexShader = resourceManager.readAsset("shaders/actor.vert");
+    char* fragmentShader = resourceManager.readAsset("shaders/actor.frag");
 
     if (vertexShader == nullptr || fragmentShader == nullptr) {
         LOGI("Load shader failed!");
     }
     m_shader.reset();
-    m_shader.compile(vertexShader, fragmentShader);
-
+    auto compileResult = m_shader.compile(vertexShader, fragmentShader);
     free(vertexShader);
     free(fragmentShader);
+    if (!compileResult) {
+        // TODO: abort game
+    }
+    auto initResult = m_shader.init();
+    if (!initResult) {
+        // TODO: abort game
+    }
 
     GeometryCache::getInstance()->connect();
 }
@@ -314,7 +313,6 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
 void Game::onResize() {
     AndroidGame::onResize();
     float aspectRatio = (float)m_surfaceWidth / m_surfaceHeight;
-    // TODO choose optimal zoom for objects
     m_projectionMatrix = glm::perspective(45.0f, aspectRatio, 0.01f, 50.0f);
     m_screenHeight = 1080;
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
@@ -379,30 +377,4 @@ void Game::onPause() {
 void Game::onResume() {
     // TODO: handle
     LOGD("APP_CMD_RESUME");
-}
-
-char* Game::readAsset(const std::string& path) {
-    auto assetManager = m_app->activity->assetManager;
-    AAsset* asset = AAssetManager_open(assetManager, path.c_str(), AASSET_MODE_BUFFER);
-
-    if (asset == nullptr) {
-        LOGI("Read actor shader failed!");
-        return nullptr;
-    }
-
-    long length = AAsset_getLength(asset);
-    char* buffer = (char*) malloc (length + 1); // +1 for string zero termination
-    if (buffer == nullptr) {
-        LOGI("Allocation error!");
-        return nullptr;
-    }
-    auto bytesRead = AAsset_read (asset, buffer, length);
-    if (bytesRead != length) {
-        LOGI("Read asset bytes error!");
-        return nullptr;
-    }
-    // fix the string to be zero-terminated
-    buffer[length] = 0;
-    AAsset_close(asset);
-    return buffer;
 }

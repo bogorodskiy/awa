@@ -2,6 +2,9 @@ project(awa)
 
 cmake_minimum_required(VERSION 3.4.1)
 
+#instead of calling app_dummy
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
+
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/../../../libs)
 
 add_library(physx STATIC IMPORTED)
@@ -18,7 +21,6 @@ set_target_properties(physx_foundation PROPERTIES IMPORTED_LOCATION ${LIBS_DIR}/
 
 add_library(physx_task STATIC IMPORTED)
 set_target_properties(physx_task PROPERTIES IMPORTED_LOCATION ${LIBS_DIR}/physx/${ANDROID_ABI}/libPxTask.a)
-
 
 add_library(app-glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
