@@ -10,6 +10,9 @@ Shader::Shader():
         m_mvpMatrixLocation(-1),
         m_worldMatrixLocation(-1),
         m_colorLocation(-1),
+        m_eyeWorldPositionLocation(-1),
+        m_matSpecularIntensityLocation(-1),
+        m_matSpecularPowerLocation(-1),
         m_numPointLightsLocation(-1),
         m_renderTarget(nullptr) {
 
@@ -58,7 +61,7 @@ bool Shader::compile(const char* vertexShader, const char* fragmentShader) {
 }
 
 bool Shader::init() {
-    m_initSuccessful = false;
+    m_initSuccessful = true;
     bind();
 
     m_positionLocation = getAttribLocation("a_position");
@@ -66,38 +69,51 @@ bool Shader::init() {
     m_mvpMatrixLocation = getUniformLocation("u_mvpMatrix");
     m_worldMatrixLocation = getUniformLocation("u_worldMatrix");
     m_colorLocation = getUniformLocation("u_color");
+    m_eyeWorldPositionLocation = getUniformLocation("u_eyeWorldPosition");
+    m_matSpecularIntensityLocation = getUniformLocation("u_matSpecularIntensity");
+    m_matSpecularPowerLocation = getUniformLocation("u_specularPower");
+    m_numPointLightsLocation = getUniformLocation("u_numPointLights");
 
     const auto nameBufferSize = 128;
     for (auto i = 0; i < MAX_POINT_LIGHTS; ++i) {
+        auto& location = m_pointLightsLocation[i];
         char name[nameBufferSize];
         memset(name, 0, sizeof(name));
 
         // TODO: test sprintf
         sprintf(name, "u_pointLights[%d].base.color", i);
-        m_pointLightsLocation[i].color = getUniformLocation(name);
+        location.color = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].base.ambientIntensity", i);
-        m_pointLightsLocation[i].ambientIntensity = getUniformLocation(name);
+        location.ambientIntensity = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].base.diffuseIntensity", i);
-        m_pointLightsLocation[i].diffuseIntensity = getUniformLocation(name);
+        location.diffuseIntensity = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].attenuation.constantFactor", i);
-        m_pointLightsLocation[i].attenuation.constantFactor = getUniformLocation(name);
+        location.attenuation.constantFactor = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].attenuation.linearFactor", i);
-        m_pointLightsLocation[i].attenuation.linearFactor = getUniformLocation(name);
+        location.attenuation.linearFactor = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].attenuation.exponentialFactor", i);
-        m_pointLightsLocation[i].attenuation.exponentialFactor = getUniformLocation(name);
+        location.attenuation.exponentialFactor = getUniformLocation(name);
 
         sprintf(name, "u_pointLights[%d].position", i);
-        m_pointLightsLocation[i].position = getUniformLocation(name);
+        location.position = getUniformLocation(name);
+
+        if (!checkLightLocationIsValid(i)) {
+            m_initSuccessful = false;
+            break;
+        }
     }
 
     unbind();
     if (m_initSuccessful) {
         LOGD("Shader init succeeded.");
+    }
+    else {
+        LOGE("Shader init error.");
     }
     return m_initSuccessful;
 }
@@ -137,6 +153,7 @@ void Shader::unbind() {
     glUseProgram(0);
 }
 
+// TODO: begin and end render for rendering target multiple times, not used now
 void Shader::beginRender(Geometry* renderTarget) {
     m_renderTarget = renderTarget;
     if (m_renderTarget == nullptr){
@@ -144,7 +161,9 @@ void Shader::beginRender(Geometry* renderTarget) {
         return;
     }
     m_renderTarget->bindVertexBuffer();
-    glVertexAttribPointer(m_positionLocation, 3, GL_FLOAT, GL_FALSE, renderTarget->getVerticesStride(), 0);
+    const auto positionSize = static_cast<GLint>(3);
+    const auto normalized = static_cast<GLboolean>(GL_FALSE);
+    glVertexAttribPointer(m_positionLocation, positionSize, GL_FLOAT, normalized, renderTarget->getVerticesStride(), 0);
     glEnableVertexAttribArray(m_positionLocation);
 
     // TODO set uniform light properties
@@ -156,13 +175,20 @@ void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
         return;
     }
 
-    glUniformMatrix4fv(m_mvpMatrixLocation, 1, GL_FALSE, glm::value_ptr(*mvpMatrix));
-    // TODO: pass model 3x3 matrix?
-    // GLint location, GLsizei count, const GLfloat* v
-    glUniform4fv(m_colorLocation, 1, glm::value_ptr(*m_renderTarget->getColor()));
+    static const auto countOne = static_cast<GLsizei>(1);
+    auto transpose = static_cast<GLboolean>(GL_FALSE);
+    glUniformMatrix4fv(m_mvpMatrixLocation, countOne, transpose, glm::value_ptr(*mvpMatrix));
+    //transpose = GL_TRUE;
+    auto testModel = *modelMatrix;
+    //testModel = glm::inverse(testModel);
+
+    glUniformMatrix4fv(m_worldMatrixLocation, countOne, transpose, glm::value_ptr(testModel));
+    glUniform4fv(m_colorLocation, countOne, glm::value_ptr(*m_renderTarget->getColor()));
 
     m_renderTarget->bindNormalBuffer();
-    glVertexAttribPointer(m_normalLocation, 3, GL_FLOAT, GL_FALSE, m_renderTarget->getNormalsStride(), 0);
+    static const auto normalSize = static_cast<GLint>(3);
+    const auto normalized = static_cast<GLboolean>(GL_FALSE);
+    glVertexAttribPointer(m_normalLocation, normalSize, GL_FLOAT, normalized, m_renderTarget->getNormalsStride(), 0);
     glEnableVertexAttribArray(m_normalLocation);
     m_renderTarget->unbindNormalBuffer();
 
@@ -203,25 +229,51 @@ GLint Shader::getUniformLocation(const char* uniformName) {
     return result;
 }
 
-void Shader::setPointLights(int numLights, PointLight* pointLights) {
+void Shader::setPointLights(const std::vector<std::shared_ptr<PointLight>>& pointLights) {
+    const auto numLights = pointLights.size();
     if (numLights > MAX_POINT_LIGHTS) {
         LOGE("Num point lights > MAX (%d)", numLights);
         return;
     }
     if (!m_initSuccessful) {
-        LOGE("Unable to set point lights, shader is not initialized", numLights);
+        LOGE("Unable to set point lights, shader is not initialized");
         return;
     }
 
     for (auto i = 0; i < numLights; ++i) {
-        glUniform3f(m_pointLightsLocation[i].color, pointLights[i].color.x, pointLights[i].color.y, pointLights[i].color.z);
-        glUniform1f(m_pointLightsLocation[i].ambientIntensity, pointLights[i].ambientIntensity);
-        glUniform1f(m_pointLightsLocation[i].diffuseIntensity, pointLights[i].diffuseIntensity);
-        glUniform1f(m_pointLightsLocation[i].attenuation.constantFactor, pointLights[i].attenuation.constantFactor);
-        glUniform1f(m_pointLightsLocation[i].attenuation.linearFactor, pointLights[i].attenuation.linearFactor);
-        glUniform1f(m_pointLightsLocation[i].attenuation.exponentialFactor, pointLights[i].attenuation.exponentialFactor);
-        glUniform3f(m_pointLightsLocation[i].position, pointLights[i].position.x, pointLights[i].position.y, pointLights[i].position.z);
+        const auto& pointLight = pointLights.at(i);
+        const auto& location = m_pointLightsLocation[i];
+        glUniform3f(location.color, pointLight->color.x, pointLight->color.y, pointLight->color.z);
+        glUniform1f(location.ambientIntensity, pointLight->ambientIntensity);
+        glUniform1f(location.diffuseIntensity, pointLight->diffuseIntensity);
+        glUniform1f(location.attenuation.constantFactor, pointLight->attenuation.constantFactor);
+        glUniform1f(location.attenuation.linearFactor, pointLight->attenuation.linearFactor);
+        glUniform1f(location.attenuation.exponentialFactor, pointLight->attenuation.exponentialFactor);
+        glUniform3f(location.position, pointLight->position.x, pointLight->position.y, pointLight->position.z);
     }
+
+    glUniform1i(m_numPointLightsLocation, numLights);
+    // TODO: pass these parameters from outside
+    glUniform1f(m_matSpecularIntensityLocation, 0.0f);
+    glUniform1f(m_matSpecularPowerLocation, 0);
+}
+
+void Shader::setEyeWorldPosition(float x, float y, float z) {
+    glUniform3f(m_eyeWorldPositionLocation, x, y, z);
+}
+
+bool Shader::checkLightLocationIsValid(int index) {
+    auto& location = m_pointLightsLocation[index];
+    if (location.color < 0 ||
+        location.ambientIntensity < 0 ||
+        location.position < 0 ||
+        location.diffuseIntensity < 0 ||
+        location.attenuation.constantFactor < 0 ||
+        location.attenuation.linearFactor < 0 ||
+        location.attenuation.exponentialFactor < 0) {
+        return false;
+    }
+    return true;
 }
 
 void Shader::reset() {

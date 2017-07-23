@@ -3,6 +3,8 @@
 
 #include <GLES3/gl3.h>
 #include <stdlib.h>
+#include <memory>
+#include <vector>
 #include "common.h"
 #include "../game/geometry/Geometry.h"
 #include "light.h"
@@ -22,6 +24,8 @@ public:
     void bind();
     void unbind();
     void beginRender(Geometry* renderTarget);
+    void setPointLights(const std::vector<std::shared_ptr<PointLight>>& pointLights);
+    void setEyeWorldPosition(float x, float y, float z);
     void render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix);
     void endRender();
     void reset();
@@ -35,6 +39,9 @@ private:
     GLint m_mvpMatrixLocation;
     GLint m_worldMatrixLocation;
     GLint m_colorLocation;
+    GLint m_eyeWorldPositionLocation;
+    GLint m_matSpecularIntensityLocation;
+    GLint m_matSpecularPowerLocation;
     GLint m_numPointLightsLocation;
 
     Geometry* m_renderTarget;
@@ -55,7 +62,7 @@ private:
     GLuint loadShader(GLenum shaderType, const char* pSource);
     GLint getAttribLocation(const char* attribName);
     GLint getUniformLocation(const char* uniformName);
-    void setPointLights(int numLights, PointLight* pointLights);
+    bool checkLightLocationIsValid(int index);
 };
 
 

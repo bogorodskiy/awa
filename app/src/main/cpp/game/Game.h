@@ -41,11 +41,6 @@ private:
     int m_screenWidth;
     int m_screenHeight;
 
-    // debug
-    Geometry* m_xAxis;
-    Geometry* m_yAxis;
-    Geometry* m_zAxis;
-
     // PhysX
     physx::PxFoundation* m_pxFoundation;
     physx::PxPhysics* m_pxPhysics;
@@ -66,7 +61,6 @@ private:
     void finalizeLevel();
     void initPhysX();
     void finalizePhysX();
-    void getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat);
     void renderPxActor(physx::PxRigidActor* actor, Geometry* geometry);
     GameObject* createBall(int id, float x, float y, float z);
     bool isPlayer(physx::PxRigidActor* actor);

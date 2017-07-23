@@ -8,9 +8,6 @@ Game::Game(struct android_app *app) :
         m_ball(nullptr),
         m_screenWidth(1920),
         m_screenHeight(1080),
-        m_xAxis(nullptr),
-        m_yAxis(nullptr),
-        m_zAxis(nullptr),
         m_pxFoundation(nullptr),
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
@@ -125,15 +122,6 @@ void Game::initLevel()
     m_inputSystem.initialize(&inputTouchLayer, &m_camera);
     m_inputSystem.addEntity(m_ball);
 
-    m_xAxis = GeometryCache::getInstance()->getLine(glm::vec3(-10.0f, 0.0f, 0.0f), glm::vec3(10.0f, 0.0f, 0.0f));
-    m_xAxis->setColor(1.0f, 0.0f, 0.0f, 1.0f);
-
-    m_yAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-    m_yAxis->setColor(0.0f, 1.0f, 0.0f, 1.0f);
-
-    m_zAxis = GeometryCache::getInstance()->getLine(glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 0.0f, 10.0f));
-    m_zAxis->setColor(0.0f, 0.0f, 1.0f, 1.0f);
-
     m_room.initialize(20.0f, 10.0f, 30.0f);
 
     m_camera.setPosition(0.0f, 5.0f, 20.0f);
@@ -174,7 +162,7 @@ GameObject* Game::createBall(int id, float x, float y, float z) {
     m_pxScene->addActor(*actor);
 
     auto geometry = GeometryCache::getInstance()->getSphere();
-    geometry->setPrimitive(GL_LINES);
+    geometry->setPrimitive(GL_TRIANGLES);
     geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     auto result = new GameObject(id, geometry, actor, m_pxShapeBuffer);
@@ -182,8 +170,8 @@ GameObject* Game::createBall(int id, float x, float y, float z) {
 }
 
 void Game::startGraphics() {
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
 
     auto& resourceManager = ResourceManager::getInstance();
 
@@ -211,28 +199,6 @@ void Game::startGraphics() {
 void Game::killGraphics() {
     GeometryCache::getInstance()->disconnect();
     m_shader.reset();
-}
-
-void Game::getColumnMajor(physx::PxMat33 m, physx::PxVec3 t, float* mat) {
-    mat[0] = m.column0[0];
-    mat[1] = m.column0[1];
-    mat[2] = m.column0[2];
-    mat[3] = 0;
-
-    mat[4] = m.column1[0];
-    mat[5] = m.column1[1];
-    mat[6] = m.column1[2];
-    mat[7] = 0;
-
-    mat[8] = m.column2[0];
-    mat[9] = m.column2[1];
-    mat[10] = m.column2[2];
-    mat[11] = 0;
-
-    mat[12] = t[0];
-    mat[13] = t[1];
-    mat[14] = t[2];
-    mat[15] = 1;
 }
 
 void Game::update(float dt) {
@@ -270,21 +236,6 @@ void Game::render() {
         renderPxActor(elementPair.second, elementPair.first);
     }
 
-    // debug
-    auto identityMatrix = glm::mat4(1.0);
-    auto mvpMatrix = m_projectionMatrix * m_viewMatrix;
-    m_shader.beginRender(m_xAxis);
-    m_shader.render(&mvpMatrix, &identityMatrix);
-    m_shader.endRender();
-
-    m_shader.beginRender(m_yAxis);
-    m_shader.render(&mvpMatrix, &identityMatrix);
-    m_shader.endRender();
-
-    m_shader.beginRender(m_zAxis);
-    m_shader.render(&mvpMatrix, &identityMatrix);
-    m_shader.endRender();
-
     m_shader.unbind();
 }
 
@@ -298,14 +249,18 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
     actor->getShapes(m_pxShapeBuffer, nShapes);
     auto shape = m_pxShapeBuffer[0];
     physx::PxTransform transform = physx::PxShapeExt::getGlobalPose(*shape, *actor);
-    physx::PxMat33 mat3 = physx::PxMat33(transform.q);
-    float mat4[16];
-    getColumnMajor(mat3, transform.p, mat4);
+    glm::mat4 modelMatrix = glm::make_mat4(physx::PxMat44(transform.q).front());
+    modelMatrix[3][0] = transform.p[0];
+    modelMatrix[3][1] = transform.p[1];
+    modelMatrix[3][2] = transform.p[2];
+    modelMatrix[3][3] = 1;
 
-    auto modelMatrix = glm::make_mat4(mat4);
+    // TODO: combine projection and view, same for all on each render
     auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
 
     m_shader.beginRender(geometry);
+    m_shader.setPointLights(m_room.getPointLights());
+    m_shader.setEyeWorldPosition(m_camera.getPosition().x, m_camera.getPosition().y, m_camera.getPosition().z);
     m_shader.render(&mvpMatrix, &modelMatrix);
     m_shader.endRender();
 }

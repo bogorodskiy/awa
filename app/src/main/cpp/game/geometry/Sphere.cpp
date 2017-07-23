@@ -1,6 +1,5 @@
 #include "Sphere.h"
 
-// TODO: num vertices depends on radius
 Sphere::Sphere(float radius) : Geometry::Geometry(),
                    m_vertices(nullptr),
                    m_normals(nullptr),

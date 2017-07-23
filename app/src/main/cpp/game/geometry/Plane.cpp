@@ -18,10 +18,22 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
     m_indices[4] = 3;
     m_indices[5] = 0;
 
-    m_normals = new GLfloat[3];
+    m_normals = new GLfloat[3 * m_numVertices];
     m_normals[0] = 1.0f;
     m_normals[1] = 0.0f;
     m_normals[2] = 0.0f;
+
+    m_normals[3] = 1.0f;
+    m_normals[4] = 0.0f;
+    m_normals[5] = 0.0f;
+
+    m_normals[6] = 1.0f;
+    m_normals[7] = 0.0f;
+    m_normals[8] = 0.0f;
+
+    m_normals[9] = 1.0f;
+    m_normals[10] = 0.0f;
+    m_normals[11] = 0.0f;
 
     auto halfWidth = width / 2.0f;
     auto halfHeight = height / 2.0f;
