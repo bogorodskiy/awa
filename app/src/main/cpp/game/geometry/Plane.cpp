@@ -17,24 +17,6 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
     m_indices[4] = 3;
     m_indices[5] = 0;
 
-    m_numNormals = m_numVertices;
-    m_normals = new GLfloat[3 * m_numNormals];
-    m_normals[0] = 1.0f;
-    m_normals[1] = 0.0f;
-    m_normals[2] = 0.0f;
-
-    m_normals[3] = 1.0f;
-    m_normals[4] = 0.0f;
-    m_normals[5] = 0.0f;
-
-    m_normals[6] = 1.0f;
-    m_normals[7] = 0.0f;
-    m_normals[8] = 0.0f;
-
-    m_normals[9] = 1.0f;
-    m_normals[10] = 0.0f;
-    m_normals[11] = 0.0f;
-
     auto halfWidth = width / 2.0f;
     auto halfHeight = height / 2.0f;
 
@@ -53,6 +35,24 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
     m_vertices[9] = 0;
     m_vertices[10] = halfHeight;
     m_vertices[11] = -halfWidth;
+
+    m_numNormals = m_numVertices;
+    m_normals = new GLfloat[3 * m_numNormals];
+    m_normals[0] = 1.0f;
+    m_normals[1] = halfHeight;
+    m_normals[2] = halfWidth;
+
+    m_normals[3] = 1.0f;
+    m_normals[4] = -halfHeight;
+    m_normals[5] = halfWidth;
+
+    m_normals[6] = 1.0f;
+    m_normals[7] = -halfHeight;
+    m_normals[8] = -halfWidth;
+
+    m_normals[9] = 1.0f;
+    m_normals[10] = halfHeight;
+    m_normals[11] = -halfWidth;
 
     m_specularPower = 1;
     m_specularIntensity = 1.0f;
