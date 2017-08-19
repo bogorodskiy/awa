@@ -4,6 +4,8 @@ Geometry::Geometry():
         m_numVertices(0),
         m_numIndices(0),
         m_numNormals(0),
+        m_specularIntensity(0.0f),
+        m_specularPower(0.0f),
         m_primitive(GL_TRIANGLES),
         m_color(0.0f, 0.0f, 0.0f, 0.0f),
         m_vbo(0),
@@ -88,6 +90,14 @@ void Geometry::setNormals(GLfloat* data, int numNormals, int stride)
     bindNormalBuffer();
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
     unbindNormalBuffer();
+}
+
+float Geometry::getSpecularIntensity() {
+    return m_specularIntensity;
+}
+
+float Geometry::getSpecularPower() {
+    return m_specularPower;
 }
 
 void Geometry::bindVertexBuffer() {

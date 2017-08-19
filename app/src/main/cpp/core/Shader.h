@@ -26,6 +26,8 @@ public:
     void beginRender(Geometry* renderTarget);
     void setPointLights(const std::vector<std::shared_ptr<PointLight>>& pointLights);
     void setEyeWorldPosition(float x, float y, float z);
+    void setMatSpecularIntensity(float value);
+    void setMatSpecularPower(float value);
     void render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix);
     void endRender();
     void reset();

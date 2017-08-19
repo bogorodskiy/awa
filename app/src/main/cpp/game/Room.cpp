@@ -70,6 +70,9 @@ void Room::initialize(float width, float height, float depth) {
     m_pxScene->addActor(*ceilingPx);
     m_sidePairs.emplace_back(std::make_pair(plane, ceilingPx));
 
+//    auto lightCenter = createPointLight({0.0f, 3.0f, 0.0f}, 1.0f, 1.0f, 1.0f);
+//    m_pointLights.emplace_back(lightCenter);
+
     auto light1 = createPointLight({-halfWidth + 1.0f, halfHeight - 1.0f, -halfDepth + 1.0f}, 1.0f, 0.0f, 0.0f);
     m_pointLights.emplace_back(light1);
 
@@ -126,6 +129,7 @@ std::shared_ptr<PointLight> Room::createPointLight(const physx::PxVec3& position
 
     result->attenuation.linearFactor = 0.1f;
     result->diffuseIntensity = 0.5f;
+    //result->ambientIntensity = 0.2f;
 
     return result;
 }

@@ -5,7 +5,6 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
                  m_indices(nullptr),
                  m_normals(nullptr)
 {
-    LOGI("PLANE CTOR");
     m_numVertices = 4;
     m_vertices = new GLfloat[3 * m_numVertices];
 
@@ -18,7 +17,8 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
     m_indices[4] = 3;
     m_indices[5] = 0;
 
-    m_normals = new GLfloat[3 * m_numVertices];
+    m_numNormals = m_numVertices;
+    m_normals = new GLfloat[3 * m_numNormals];
     m_normals[0] = 1.0f;
     m_normals[1] = 0.0f;
     m_normals[2] = 0.0f;
@@ -53,12 +53,13 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
     m_vertices[9] = 0;
     m_vertices[10] = halfHeight;
     m_vertices[11] = -halfWidth;
+
+    m_specularPower = 1;
+    m_specularIntensity = 1.0f;
 }
 
 Plane::~Plane() {
     Geometry::~Geometry();
-
-    LOGI("PLANE DTOR");
 
     if (m_vertices != nullptr) {
         delete[] m_vertices;
@@ -73,8 +74,8 @@ Plane::~Plane() {
 
 void Plane::initBuffers() {
     setVertices(m_vertices, m_numVertices, 3 * sizeof(GLfloat));
-    setIndices(m_indices, m_numIndices * 3 * sizeof(GLushort));
-    setNormals(m_normals, m_numVertices, 3 * sizeof(GLfloat));
+    setIndices(m_indices, m_numIndices * sizeof(GLushort));
+    setNormals(m_normals, m_numNormals, 3 * sizeof(GLfloat));
 }
 
 GLenum Plane::getPrimitive() {

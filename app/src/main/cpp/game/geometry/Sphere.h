@@ -8,12 +8,16 @@ class Sphere : public Geometry {
 public:
     virtual void initBuffers() override;
 private:
-    Sphere(float radius);
-    virtual ~Sphere();
-
     GLfloat* m_vertices;
     GLfloat* m_normals;
     GLushort* m_indices;
+
+    Sphere(float radius);
+    virtual ~Sphere();
+
+    void addVertex(int index, float x, float y, float z);
+    void addNormal(int index, float x, float y, float z);
+    void addIndex(int index, GLushort value);
 };
 
 

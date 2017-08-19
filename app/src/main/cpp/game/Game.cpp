@@ -170,8 +170,8 @@ GameObject* Game::createBall(int id, float x, float y, float z) {
 }
 
 void Game::startGraphics() {
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     auto& resourceManager = ResourceManager::getInstance();
 
@@ -257,6 +257,9 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
 
     // TODO: combine projection and view, same for all on each render
     auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
+
+    //modelMatrix = glm::inverse(modelMatrix);
+    //modelMatrix = glm::transpose(modelMatrix);
 
     m_shader.beginRender(geometry);
     m_shader.setPointLights(m_room.getPointLights());

@@ -170,25 +170,25 @@ void Shader::beginRender(Geometry* renderTarget) {
 }
 
 void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix) {
+    static const auto COUNT_ONE = static_cast<GLsizei>(1);
+    static const auto NO_TRANSPOSE = static_cast<GLboolean>(GL_FALSE);
+    static const auto NORMAL_SIZE_THREE = static_cast<GLint>(3);
+    static const auto NOT_NORMALIZED = static_cast<GLboolean>(GL_FALSE);
+
     if (m_renderTarget == nullptr) {
         LOGE("Unable to render in shader, target is null");
         return;
     }
 
-    static const auto countOne = static_cast<GLsizei>(1);
-    auto transpose = static_cast<GLboolean>(GL_FALSE);
-    glUniformMatrix4fv(m_mvpMatrixLocation, countOne, transpose, glm::value_ptr(*mvpMatrix));
-    //transpose = GL_TRUE;
-    auto testModel = *modelMatrix;
-    //testModel = glm::inverse(testModel);
-
-    glUniformMatrix4fv(m_worldMatrixLocation, countOne, transpose, glm::value_ptr(testModel));
-    glUniform4fv(m_colorLocation, countOne, glm::value_ptr(*m_renderTarget->getColor()));
+    glUniformMatrix4fv(m_mvpMatrixLocation, COUNT_ONE, NO_TRANSPOSE, glm::value_ptr(*mvpMatrix));
+    glUniformMatrix4fv(m_worldMatrixLocation, COUNT_ONE, NO_TRANSPOSE, glm::value_ptr(*modelMatrix));
+    glUniform4fv(m_colorLocation, COUNT_ONE, glm::value_ptr(*m_renderTarget->getColor()));
+    setMatSpecularIntensity(m_renderTarget->getSpecularIntensity());
+    setMatSpecularPower(m_renderTarget->getSpecularPower());
 
     m_renderTarget->bindNormalBuffer();
-    static const auto normalSize = static_cast<GLint>(3);
-    const auto normalized = static_cast<GLboolean>(GL_FALSE);
-    glVertexAttribPointer(m_normalLocation, normalSize, GL_FLOAT, normalized, m_renderTarget->getNormalsStride(), 0);
+
+    glVertexAttribPointer(m_normalLocation, NORMAL_SIZE_THREE, GL_FLOAT, NOT_NORMALIZED, m_renderTarget->getNormalsStride(), 0);
     glEnableVertexAttribArray(m_normalLocation);
     m_renderTarget->unbindNormalBuffer();
 
@@ -253,13 +253,18 @@ void Shader::setPointLights(const std::vector<std::shared_ptr<PointLight>>& poin
     }
 
     glUniform1i(m_numPointLightsLocation, numLights);
-    // TODO: pass these parameters from outside
-    glUniform1f(m_matSpecularIntensityLocation, 0.0f);
-    glUniform1f(m_matSpecularPowerLocation, 0);
 }
 
 void Shader::setEyeWorldPosition(float x, float y, float z) {
     glUniform3f(m_eyeWorldPositionLocation, x, y, z);
+}
+
+void Shader::setMatSpecularIntensity(float value) {
+    glUniform1f(m_matSpecularIntensityLocation, value);
+}
+
+void Shader::setMatSpecularPower(float value) {
+    glUniform1f(m_matSpecularPowerLocation, value);
 }
 
 bool Shader::checkLightLocationIsValid(int index) {

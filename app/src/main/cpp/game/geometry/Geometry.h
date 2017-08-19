@@ -24,6 +24,9 @@ public:
     void setIndices(GLushort* data, int size);
     void setNormals(GLfloat* data, int numNormals, int stride);
 
+    float getSpecularIntensity();
+    float getSpecularPower();
+
     void bindVertexBuffer();
     void bindIndexBuffer();
     void bindNormalBuffer();
@@ -38,6 +41,9 @@ protected:
     int m_numVertices;
     int m_numIndices;
     int m_numNormals;
+
+    float m_specularIntensity;
+    float m_specularPower;
 
     Geometry();
     virtual ~Geometry();
