@@ -1,8 +1,0 @@
-set(GAME_GEOMETRY_SRC 	${CMAKE_CURRENT_SOURCE_DIR}/GeometryCache.cpp
-                        ${CMAKE_CURRENT_SOURCE_DIR}/Geometry.cpp
-				        ${CMAKE_CURRENT_SOURCE_DIR}/Sphere.cpp
-				        ${CMAKE_CURRENT_SOURCE_DIR}/Line.cpp
-				        ${CMAKE_CURRENT_SOURCE_DIR}/Plane.cpp
-
-				        PARENT_SCOPE
-    )

@@ -70,20 +70,8 @@ void Room::initialize(float width, float height, float depth) {
     m_pxScene->addActor(*ceilingPx);
     m_sidePairs.emplace_back(std::make_pair(plane, ceilingPx));
 
-//    auto lightCenter = createPointLight({0.0f, 3.0f, 0.0f}, 1.0f, 1.0f, 1.0f);
-//    m_pointLights.emplace_back(lightCenter);
-
-    auto light1 = createPointLight({-halfWidth + 1.0f, halfHeight - 1.0f, -halfDepth + 1.0f}, 1.0f, 0.0f, 0.0f);
-    m_pointLights.emplace_back(light1);
-
-    auto light2 = createPointLight({halfWidth - 1.0f, halfHeight - 1.0f, -halfDepth + 1.0f}, 0.0f, 1.0f, 0.0f);
-    m_pointLights.emplace_back(light2);
-
-    auto light3 = createPointLight({-halfWidth + 1.0f, halfHeight - 1.0f, halfDepth - 1.0f}, 0.0f, 0.0f, 1.0f);
-    m_pointLights.emplace_back(light3);
-
-    auto light4 = createPointLight({halfWidth - 1.0f, halfHeight - 1.0f, halfDepth - 1.0f}, 1.0f, 1.0f, 0.0f);
-    m_pointLights.emplace_back(light4);
+    auto lightCenter = createPointLight({0.0f, 1.0f, 0.0f}, 1.0f, 1.0f, 1.0f);
+    m_pointLights.emplace_back(lightCenter);
 }
 
 std::vector<Room::a_Side>& Room::getElements() {
@@ -127,9 +115,11 @@ std::shared_ptr<PointLight> Room::createPointLight(const physx::PxVec3& position
     result->color.g = g;
     result->color.b = b;
 
-    result->attenuation.linearFactor = 0.1f;
-    result->diffuseIntensity = 0.5f;
-    //result->ambientIntensity = 0.2f;
+    result->attenuation.constantFactor = 0.0f; // 1.0f
+    result->attenuation.exponentialFactor = 0.0f; // 0.0f
+    result->attenuation.linearFactor = 1.5f; // 0.0f
+    result->diffuseIntensity = 0.2f;
+    result->ambientIntensity = 3.0f;
 
     return result;
 }

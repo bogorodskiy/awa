@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "Game.h"
 #include "geometry/GeometryCache.h"
 #include "../core/resource/ResourceManager.h"
@@ -5,15 +6,13 @@
 Game::Game(struct android_app *app) :
         AndroidGame(app),
         m_initialized(false),
-        m_ball(nullptr),
         m_screenWidth(1920),
         m_screenHeight(1080),
         m_pxFoundation(nullptr),
         m_pxPhysics(nullptr),
         m_pxScene(nullptr),
         m_pxTimestep(1.0f/60.0f),
-        m_pxShapeBuffer(nullptr),
-        m_ball2(nullptr)
+        m_pxShapeBuffer(nullptr)
 {
     initPhysX();
     initLevel();
@@ -114,20 +113,21 @@ void Game::initLevel()
 
     m_initialized = true;
 
-    m_ball = createBall(0, 0.0f, 3.0f, 0.0f);
-
-    // TODO: remove test
-    m_ball2 = createBall(1, 3.0f, 4.0f, 3.0f);
-
     m_inputSystem.initialize(&inputTouchLayer, &m_camera);
-    m_inputSystem.addEntity(m_ball);
+
+    auto numBalls = 11;
+    for (int i = 0; i < numBalls; ++i) {
+        auto ball = createBall(i, 0.0f, 3.0f + i, 2.0f);
+        m_balls.emplace_back(ball);
+        m_inputSystem.addEntity(ball);
+    }
 
     m_room.initialize(20.0f, 10.0f, 30.0f);
 
     m_camera.setPosition(0.0f, 5.0f, 20.0f);
     m_camera.setUpVector(0.0f, 1.0f, 0.0f);
     m_camera.setDirection(0.0f, -1.0f, -20.0f);
-    m_camera.setTarget(m_ball);
+    m_camera.setTarget(m_balls.front());
     auto roomBounds = m_room.getBounds();
     m_camera.setRoomBounds(-roomBounds.x * 0.5f, roomBounds.x * 0.5f,
                            -roomBounds.y * 0.5f, roomBounds.y * 0.5f,
@@ -135,8 +135,9 @@ void Game::initLevel()
 }
 
 void Game::finalizeLevel() {
-    delete m_ball;
-    delete m_ball2;
+    for (auto ball : m_balls) {
+        delete ball;
+    }
 }
 
 GameObject* Game::createBall(int id, float x, float y, float z) {
@@ -163,7 +164,15 @@ GameObject* Game::createBall(int id, float x, float y, float z) {
 
     auto geometry = GeometryCache::getInstance()->getSphere();
     geometry->setPrimitive(GL_TRIANGLES);
-    geometry->setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    auto randomDelta = (1 + std::rand() % 5) / 10.0f;
+    // purple
+    auto r = 0.47;
+    auto g = 0.26;
+    auto b = 0.5 + randomDelta;
+    geometry->setColor(r, g, b, 1.0f);
+
+    LOGI("+++ Delta = %f", randomDelta);
 
     auto result = new GameObject(id, geometry, actor, m_pxShapeBuffer);
     return result;
@@ -204,8 +213,9 @@ void Game::killGraphics() {
 void Game::update(float dt) {
     m_inputSystem.update(dt);
 
-    m_ball->applyGravity();
-    m_ball2->applyGravity();
+    for (auto ball : m_balls) {
+        ball->applyGravity();
+    }
 
     m_pxScene->simulate(dt);
 
@@ -220,6 +230,8 @@ void Game::update(float dt) {
 void Game::render() {
     AndroidGame::render();
 
+
+
     const auto& camPositionVector = m_camera.getPosition();
     const auto& camUpVector = m_camera.getUpVector();
     const auto& camDirectionVector = m_camera.getDirection();
@@ -230,8 +242,10 @@ void Game::render() {
 
     m_shader.bind();
 
-    renderPxActor(m_ball->getActor(), m_ball->getGeometry());
-    renderPxActor(m_ball2->getActor(), m_ball2->getGeometry());
+    for (auto ball : m_balls) {
+        renderPxActor(ball->getActor(), ball->getGeometry());
+    }
+
     for (auto& elementPair : m_room.getElements()) {
         renderPxActor(elementPair.second, elementPair.first);
     }
@@ -257,9 +271,6 @@ void Game::renderPxActor(physx::PxRigidActor* actor, Geometry* geometry) {
 
     // TODO: combine projection and view, same for all on each render
     auto mvpMatrix = m_projectionMatrix * m_viewMatrix * modelMatrix;
-
-    //modelMatrix = glm::inverse(modelMatrix);
-    //modelMatrix = glm::transpose(modelMatrix);
 
     m_shader.beginRender(geometry);
     m_shader.setPointLights(m_room.getPointLights());

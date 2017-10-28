@@ -41,6 +41,7 @@ char* ResourceManager::readAsset(const std::string& path) {
     return buffer;
 }
 
+// load png image test
 void ResourceManager::loadImage() {
     AAsset* testAsset = AAssetManager_open(m_assetManager, "pig1.png", AASSET_MODE_UNKNOWN);
     if (testAsset != nullptr) {
@@ -53,7 +54,7 @@ void ResourceManager::loadImage() {
 
     FreeImage_Initialise(TRUE);
 
-    //FIBITMAP* bitmap = FreeImage_Load(FREE_IMAGE_FORMAT::FIF_PNG, "../../../assets/pig.png");
+    //FIBITMAP* bitmap = FreeImage_Load(FREE_IMAGE_FORMAT::FIF_PNG, "../../../assets/pig1.png");
 
     FreeImage_DeInitialise();
 }

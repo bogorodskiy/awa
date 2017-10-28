@@ -24,15 +24,17 @@ GeometryCache* GeometryCache::getInstance() {
 }
 
 Geometry* GeometryCache::getSphere() {
-    if (m_geometries.find(GeometryType::SPHERE) != m_geometries.end()) {
-        return m_geometries[GeometryType::SPHERE];
-    }
+    // TODO: create cache by color, now no cache
+//    if (m_geometries.find(GeometryType::SPHERE) != m_geometries.end()) {
+//        return m_geometries[GeometryType::SPHERE];
+//    }
 
     auto sphere = new Sphere(0.5f);
     if (m_graphicsReady) {
         sphere->initBuffers();
     }
-    m_geometries[GeometryType::SPHERE] = sphere;
+    //m_geometries[GeometryType::SPHERE] = sphere;
+    m_uniqueGeometries.emplace_back(sphere);
     return sphere;
 }
 

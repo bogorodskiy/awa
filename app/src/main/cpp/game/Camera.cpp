@@ -20,7 +20,7 @@ Camera::Camera():
 }
 
 const physx::PxVec3& Camera::getPosition() const{
-    return m_destPosition;
+    return m_currentPosition;
 }
 
 void Camera::setPosition(float x, float y, float z) {

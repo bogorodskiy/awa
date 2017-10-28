@@ -1,4 +1,0 @@
-set(CORE_GAMEPLAY_SRC 
-				${CMAKE_CURRENT_SOURCE_DIR}/GameObject.cpp
-				PARENT_SCOPE
-	)

@@ -36,8 +36,7 @@ protected:
     virtual void onResize() override;
 private:
     bool m_initialized;
-    GameObject* m_ball;
-    GameObject* m_ball2;
+    std::vector<GameObject*> m_balls;
     int m_screenWidth;
     int m_screenHeight;
 

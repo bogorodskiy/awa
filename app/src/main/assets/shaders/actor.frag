@@ -77,6 +77,5 @@ void main() {
     for (int i = 0; i < u_numPointLights; ++i) {
         result += calcPointLight(i, normal);
     }
-    //result = 0.0f + result * 0.0001f;
     fragColor = u_color * result;
 }

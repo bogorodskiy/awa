@@ -5,18 +5,19 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
                    m_normals(nullptr),
                    m_indices(nullptr)
 {
-    auto latitudeBands = 30;
-    auto longitudeBands = 30;
+    auto latitudeBands = 31;
+    auto longitudeBands = 31;
     auto index = 0;
     m_numVertices = (latitudeBands + 1) * (longitudeBands + 1);
     m_vertices = new GLfloat[m_numVertices * 3];
 
-    m_numIndices = (latitudeBands + 1) * (longitudeBands + 1) * 6;
+    m_numIndices = latitudeBands * longitudeBands * 6;
     m_indices = new GLushort[m_numIndices];
 
     m_numNormals = m_numVertices;
     m_normals = new GLfloat[m_numNormals * 3];
 
+    int vertexCount = 0;
     for (auto latNumber = 0; latNumber <= latitudeBands; ++latNumber) {
         auto theta = latNumber * M_PI / (double)latitudeBands;
         auto sinTheta = glm::sin(theta);
@@ -29,6 +30,8 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
             GLfloat x = static_cast<GLfloat>(cosPhi * sinTheta);
             GLfloat y = static_cast<GLfloat>(cosTheta);
             GLfloat z = static_cast<GLfloat>(sinPhi * sinTheta);
+
+            vertexCount++;
 
             addVertex(index, x * radius, y * radius, z * radius);
             addNormal(index, x, y, z);
@@ -64,7 +67,6 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
 
 void Sphere::initBuffers() {
     setVertices(m_vertices, m_numVertices, 3 * sizeof(GLfloat));
-    //setIndices(m_indices, m_numIndices * 3 * sizeof(GLushort));
     setIndices(m_indices, m_numIndices * sizeof(GLushort));
     setNormals(m_normals, m_numNormals, 3 * sizeof(GLfloat));
 }
@@ -96,7 +98,6 @@ void Sphere::addIndex(int index, GLushort value) {
     }
     m_indices[index] = value;
 }
-
 
 Sphere::~Sphere() {
     if (m_vertices != nullptr) {
