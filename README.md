@@ -16,4 +16,6 @@ I've been using the latest NDK, because of that I had to change makefiles, so he
 
 P.S.
 
-If you have any questions or comments, you can send it here on github or to email arestic@ya.ru .
+If you have any questions or comments, you can send it here on github or to email arestic@ya.ru. 
+
+Test .apk file is located at apk directory of the project.
