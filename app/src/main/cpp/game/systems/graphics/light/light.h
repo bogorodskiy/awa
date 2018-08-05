@@ -1,13 +1,11 @@
 #ifndef IRON_BALLS_LIGHT_H
 #define IRON_BALLS_LIGHT_H
 
-#include "../../../../glm/glm.hpp"
-
 // TODO: delete
 struct DirectionalLight
 {
-    glm::vec3 color;
-    glm::vec3 direction;
+    physx::PxVec3 color;
+    physx::PxVec3 direction;
     float diffuseIntensity;
 };
 

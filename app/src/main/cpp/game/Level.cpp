@@ -33,9 +33,9 @@ std::shared_ptr<PointLight> Level::createPointLight(const physx::PxVec3& positio
     result->position.x = position.x;
     result->position.y = position.y;
     result->position.z = position.z;
-    result->color.r = r;
-    result->color.g = g;
-    result->color.b = b;
+    result->color.x = r;
+    result->color.y = g;
+    result->color.z = b;
 
     result->attenuation.constantFactor = 0.0f;
     result->attenuation.exponentialFactor = 0.0f;

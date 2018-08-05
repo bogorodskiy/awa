@@ -164,15 +164,16 @@ void Shader::beginRender(Geometry* renderTarget) {
     glEnableVertexAttribArray(static_cast<GLuint>(m_positionLocation));
 }
 
-void Shader::render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix, const glm::vec4& color) {
+void Shader::render(const physx::PxMat44& mvpMatrix, const physx::PxMat44& modelMatrix, const physx::PxVec4& color) {
     static const GLsizei COUNT_ONE = 1;
     static const GLboolean NO_TRANSPOSE = GL_FALSE;
     static const GLint NORMAL_SIZE_THREE = 3;
     static const GLboolean NOT_NORMALIZED = GL_FALSE;
 
-    glUniformMatrix4fv(m_mvpMatrixLocation, COUNT_ONE, NO_TRANSPOSE, glm::value_ptr(*mvpMatrix));
-    glUniformMatrix4fv(m_worldMatrixLocation, COUNT_ONE, NO_TRANSPOSE, glm::value_ptr(*modelMatrix));
-    glUniform4fv(m_colorLocation, COUNT_ONE, glm::value_ptr(color));
+    glUniformMatrix4fv(m_mvpMatrixLocation, COUNT_ONE, NO_TRANSPOSE, mvpMatrix.front());
+    glUniformMatrix4fv(m_worldMatrixLocation, COUNT_ONE, NO_TRANSPOSE, modelMatrix.front());
+    float rawColor[4] = {color.x, color.y, color.z, color.w};
+    glUniform4fv(m_colorLocation, COUNT_ONE, rawColor);
     setMatSpecularIntensity(m_renderTarget->getSpecularIntensity());
     setMatSpecularPower(m_renderTarget->getSpecularPower());
 

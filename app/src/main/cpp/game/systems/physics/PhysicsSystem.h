@@ -22,10 +22,10 @@ public:
     std::shared_ptr<RigidDynamicComponent> getDynamicComponent(GameObject* gameObject);
     void addDynamicEntity(GameObject* gameObject,
                           GeometryFactory::GeometryType primitive,
-                          glm::vec3 size);
+                          physx::PxVec3 size);
     void addStaticEntity(GameObject* gameObject,
                          GeometryFactory::GeometryType primitive,
-                         glm::vec3 size);
+                         physx::PxVec3 size);
     void removeDynamicEntity(GameObject* gameObject);
     void removeStaticEntity(GameObject* gameObject);
     void update(float dt);

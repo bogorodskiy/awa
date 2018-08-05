@@ -97,7 +97,7 @@ std::shared_ptr<RigidDynamicComponent> PhysicsSystem::getDynamicComponent(GameOb
 
 void PhysicsSystem::addDynamicEntity(GameObject* gameObject,
                               GeometryFactory::GeometryType primitive,
-                              glm::vec3 size) {
+                                     physx::PxVec3 size) {
     auto component = std::make_shared<RigidDynamicComponent>(m_pxPhysics,
                                                              m_pxScene,
                                                              m_pxMaterial,
@@ -113,7 +113,7 @@ void PhysicsSystem::addDynamicEntity(GameObject* gameObject,
 
 void PhysicsSystem::addStaticEntity(GameObject* gameObject,
                                      GeometryFactory::GeometryType primitive,
-                                     glm::vec3 size) {
+                                    physx::PxVec3 size) {
     auto component = std::make_shared<RigidStaticComponent>(m_pxPhysics,
                                                             m_pxScene,
                                                             m_pxMaterial,

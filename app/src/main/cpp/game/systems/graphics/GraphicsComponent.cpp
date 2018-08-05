@@ -4,23 +4,17 @@
 
 GraphicsComponent::GraphicsComponent(GameObject* gameObject,
                                      GeometryFactory::GeometryType primitive,
-                                     glm::vec3 size,
-                                     glm::vec4 color) : GameObjectComponent(gameObject) {
+                                     physx::PxVec3 size,
+                                     physx::PxVec4 color) : GameObjectComponent(gameObject) {
     geometry = createGeometry(primitive, size);
     this->color = color;
 }
 
-glm::mat4 GraphicsComponent::getModelMatrix() {
-    auto transform = m_gameObject->transform;
-    glm::mat4 modelMatrix = glm::make_mat4(physx::PxMat44(transform.q).front());
-    modelMatrix[3][0] = transform.p[0];
-    modelMatrix[3][1] = transform.p[1];
-    modelMatrix[3][2] = transform.p[2];
-    modelMatrix[3][3] = 1;
-    return modelMatrix;
+physx::PxMat44 GraphicsComponent::getModelMatrix() {
+    return physx::PxMat44(m_gameObject->transform);
 }
 
-Geometry* GraphicsComponent::createGeometry(GeometryFactory::GeometryType primitive, glm::vec3 size)
+Geometry* GraphicsComponent::createGeometry(GeometryFactory::GeometryType primitive, physx::PxVec3 size)
 {
     Geometry* result = nullptr;
     switch(primitive)

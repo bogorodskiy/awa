@@ -4,11 +4,8 @@
 #include <memory>
 #include "systems/graphics/GraphicsSystem.h"
 #include "GameObject.h"
-#include "systems/graphics/Shader.h"
 #include "../core/AndroidGame.h"
 #include "systems/input/TouchLayer.h"
-#include "geometry/Line.h"
-#include "geometry/Plane.h"
 #include "PxPhysicsAPI.h"
 #include "Level.h"
 #include "Camera.h"
@@ -36,9 +33,6 @@ private:
 
     Level m_level;
     Camera m_camera;
-
-    glm::mat4 m_viewMatrix;
-    glm::mat4 m_projectionMatrix;
 
     PlayerController m_playerController;
     GraphicsSystem m_graphicsSystem;

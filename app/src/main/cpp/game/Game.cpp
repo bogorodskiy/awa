@@ -17,8 +17,6 @@ Game::Game(struct android_app *app) :
         // TODO: abort game
     }
     initLevel();
-
-    // TODO: remove glm?
 }
 
 Game::~Game()
@@ -49,14 +47,10 @@ void Game::initLevel()
         ball->transform.q = physx::PxQuat(0.0f,0.0f, 0.0f, 1.0f);
         m_balls.emplace_back(ball);
 
-        auto size = glm::vec3(0.5f, 0.5f, 0.5f);
+        auto size = physx::PxVec3(0.5f, 0.5f, 0.5f);
         auto randomDelta = (1 + std::rand() % 5) / 10.0f;
-        auto randomColor = glm::vec4();
         // purple
-        randomColor.r = 0.47f;
-        randomColor.g = 0.26f;
-        randomColor.b = 0.5f + randomDelta;
-        randomColor.a = 1.0f;
+        auto randomColor = physx::PxVec4(0.47f, 0.26f, 0.5f + randomDelta, 1.0f);
 
         m_graphicsSystem.addEntity(ball,
                                    GeometryFactory::GeometryType::SPHERE,
@@ -77,11 +71,11 @@ void Game::initLevel()
     auto halfHeight = levelHeight * 0.5f;
     auto halfDepth = levelDepth * 0.5f;
     auto lastFreeId = numBalls;
-    auto whiteColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    auto whiteColor = physx::PxVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     // floor
     auto plane = new GameObject(lastFreeId++);
-    auto size = glm::vec3(levelDepth, levelWidth, 0.0f);
+    auto size = physx::PxVec3(levelDepth, levelWidth, 0.0f);
     plane->transform.p = physx::PxVec3(0.0f, 0.0f, 0.0f);
     plane->transform.q = physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0.0f, 0.0f, 1.0f));
     m_graphicsSystem.addEntity(plane,
@@ -94,7 +88,7 @@ void Game::initLevel()
 
     // frontWall
     plane = new GameObject(lastFreeId++);
-    size = glm::vec3(levelWidth, levelHeight, 0.0f);
+    size = physx::PxVec3(levelWidth, levelHeight, 0.0f);
     plane->transform.p = physx::PxVec3(0.0f, halfHeight, halfDepth);
     plane->transform.q = physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0.0f, 1.0f, 0.0f));
     m_graphicsSystem.addEntity(plane,
@@ -107,7 +101,7 @@ void Game::initLevel()
 
     // backWall
     plane = new GameObject(lastFreeId++);
-    size = glm::vec3(levelWidth, levelHeight, 0.0f);
+    size = physx::PxVec3(levelWidth, levelHeight, 0.0f);
     plane->transform.p = physx::PxVec3(0.0f, halfHeight, -halfDepth);
     plane->transform.q = physx::PxQuat(physx::PxPi + physx::PxHalfPi, physx::PxVec3(0.0f, 1.0f, 0.0f));
     m_graphicsSystem.addEntity(plane,
@@ -120,7 +114,7 @@ void Game::initLevel()
 
     // leftWall
     plane = new GameObject(lastFreeId++);
-    size = glm::vec3(levelDepth, levelHeight, 0.0f);
+    size = physx::PxVec3(levelDepth, levelHeight, 0.0f);
     plane->transform.p = physx::PxVec3(-halfWidth, halfHeight, 0.0f);
     plane->transform.q = physx::PxQuat(0, physx::PxVec3(0.0f, 0.0f, 0.0f));
     m_graphicsSystem.addEntity(plane,
@@ -133,7 +127,7 @@ void Game::initLevel()
 
     // rightWall
     plane = new GameObject(lastFreeId++);
-    size = glm::vec3(levelDepth, levelHeight, 0.0f);
+    size = physx::PxVec3(levelDepth, levelHeight, 0.0f);
     plane->transform.p = physx::PxVec3(halfWidth, halfHeight, 0.0f);
     plane->transform.q = physx::PxQuat(physx::PxPi, physx::PxVec3(0.0f, 1.0f, 0.0f));
     m_graphicsSystem.addEntity(plane,
@@ -146,7 +140,7 @@ void Game::initLevel()
 
     // ceiling
     plane = new GameObject(lastFreeId);
-    size = glm::vec3(halfDepth, levelWidth, 0.0f);
+    size = physx::PxVec3(levelDepth, levelWidth, 0.0f);
     plane->transform.p = physx::PxVec3(0.0f, levelHeight, 0.0f);
     plane->transform.q = physx::PxQuat(physx::PxPi + physx::PxHalfPi, physx::PxVec3(0.0f, 0.0f, 1.0f));
     m_graphicsSystem.addEntity(plane,
@@ -197,21 +191,13 @@ void Game::update(float dt) {
 void Game::render() {
     AndroidGame::render();
 
-    const auto& camPositionVector = m_camera.getPosition();
-    const auto& camUpVector = m_camera.getUpVector();
-    const auto& camDirectionVector = m_camera.getDirection();
-
-    m_viewMatrix = glm::lookAt(glm::vec3{camPositionVector.x, camPositionVector.y, camPositionVector.z},
-                               glm::vec3{camDirectionVector.x, camDirectionVector.y, camDirectionVector.z},
-                               glm::vec3{camUpVector.x, camUpVector.y, camUpVector.z});
-
-    m_graphicsSystem.render(m_projectionMatrix * m_viewMatrix);
+    const auto matrix = m_camera.getProjectionViewMatrix();
+    m_graphicsSystem.render(matrix);
 }
 
 void Game::onResize() {
     AndroidGame::onResize();
-    float aspectRatio = (float)m_surfaceWidth / m_surfaceHeight;
-    m_projectionMatrix = glm::perspective(GlobalSettings::FIELD_OF_VIEW, aspectRatio, GlobalSettings::NEAR_CLIPPING, GlobalSettings::FAR_CLIPPING);
+    m_camera.setAspectRatio((float)m_surfaceWidth / m_surfaceHeight);
     m_screenHeight = GlobalSettings::DEFAULT_SCREEN_HEIGHT;
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);

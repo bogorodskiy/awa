@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Sphere.h"
 
 Sphere::Sphere(float radius) : Geometry::Geometry(),
@@ -20,13 +21,13 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
     auto vertexCount = 0;
     for (auto latNumber = 0; latNumber <= latitudeBands; ++latNumber) {
         auto theta = latNumber * M_PI / (double)latitudeBands;
-        auto sinTheta = glm::sin(theta);
-        auto cosTheta = glm::cos(theta);
+        auto sinTheta = std::sin(theta);
+        auto cosTheta = std::cos(theta);
 
         for (auto longNumber = 0; longNumber <= longitudeBands; ++longNumber) {
             auto phi = longNumber * 2 * M_PI / (double) longitudeBands;
-            auto sinPhi = glm::sin(phi);
-            auto cosPhi = glm::cos(phi);
+            auto sinPhi = std::sin(phi);
+            auto cosPhi = std::cos(phi);
             GLfloat x = static_cast<GLfloat>(cosPhi * sinTheta);
             GLfloat y = static_cast<GLfloat>(cosTheta);
             GLfloat z = static_cast<GLfloat>(sinPhi * sinTheta);

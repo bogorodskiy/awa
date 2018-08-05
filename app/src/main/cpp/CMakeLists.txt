@@ -35,7 +35,6 @@ add_definitions("-DGLM_FORCE_SIZE_T_LENGTH -DGLM_FORCE_RADIANS")
 set(SOURCE main.cpp)
 add_subdirectory(core)
 add_subdirectory(game)
-add_subdirectory(glm)
 
 set(SOURCE ${SOURCE} ${GAME_SRC} ${CORE_SRC})
 
@@ -61,7 +60,6 @@ target_link_libraries(native-activity
                       app-glue
                       EGL
                       GLESv2
-                      glm
                       log
                       free_image
                       physx_extensions

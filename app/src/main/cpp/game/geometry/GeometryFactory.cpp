@@ -1,7 +1,6 @@
 #include "GeometryFactory.h"
 #include "Sphere.h"
 #include "Plane.h"
-#include "Line.h"
 
 GeometryFactory::GeometryFactory():
         m_graphicsReady(false){
@@ -43,15 +42,6 @@ Geometry* GeometryFactory::getPlane(float width, float height) {
     }
     m_uniqueGeometries.emplace_back(plane);
     return plane;
-}
-
-Geometry* GeometryFactory::getLine(glm::vec3 start, glm::vec3 end) {
-    auto line = new Line(start, end);
-    if (m_graphicsReady) {
-        line->initBuffers();
-    }
-    m_uniqueGeometries.emplace_back(line);
-    return line;
 }
 
 void GeometryFactory::connect() {

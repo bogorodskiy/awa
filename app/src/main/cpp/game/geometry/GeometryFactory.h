@@ -15,7 +15,6 @@ public:
     static GeometryFactory* getInstance();
     Geometry* getSphere(float radius);
     Geometry* getPlane(float width, float height);
-    Geometry* getLine(glm::vec3 start, glm::vec3 end);
     void connect();
     void disconnect();
 private:

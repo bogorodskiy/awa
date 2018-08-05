@@ -58,8 +58,8 @@ void GraphicsSystem::killGraphics()
 
 void GraphicsSystem::addEntity(GameObject* gameObject,
                                GeometryFactory::GeometryType primitive,
-                               glm::vec3 size,
-                               glm::vec4 color) {
+                               physx::PxVec3 size,
+                               physx::PxVec4 color) {
 
     auto component = std::make_shared<GraphicsComponent>(gameObject, primitive, size, color);
     if (m_numComponents == m_components.size()) {
@@ -98,11 +98,9 @@ void GraphicsSystem::removeEntity(GameObject* gameObject) {
     --m_numComponents;
 }
 
-void GraphicsSystem::render(const glm::mat4x4& viewProjectionMatrix) {
-    // TODO:
-    const auto& pointLights = m_level->getPointLights();
+void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
     m_shader.bind();
-    m_shader.setPointLights(pointLights);
+    m_shader.setPointLights(m_level->getPointLights());
     auto position = m_camera->getPosition();
     m_shader.setEyeWorldPosition(position.x, position.y, position.z);
 
@@ -110,7 +108,7 @@ void GraphicsSystem::render(const glm::mat4x4& viewProjectionMatrix) {
         auto modelMatrix = component->getModelMatrix();
         auto mvpMatrix = viewProjectionMatrix * modelMatrix;
         m_shader.beginRender(component->geometry);
-        m_shader.render(&mvpMatrix, &modelMatrix, component->color);
+        m_shader.render(mvpMatrix, modelMatrix, component->color);
         m_shader.endRender();
     }
     m_shader.unbind();

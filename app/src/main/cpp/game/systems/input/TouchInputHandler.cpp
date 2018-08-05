@@ -1,5 +1,6 @@
 #include "../../../core/common.h"
 #include <string>
+#include <cmath>
 #include "TouchInputHandler.h"
 
 TouchInputHandler::TouchInputHandler(TouchInputHandler::TouchInputType type, int zIndex):

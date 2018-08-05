@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <memory>
 #include <vector>
+#include <foundation/PxMat44.h>
 #include "../../../core/common.h"
 #include "../../geometry/Geometry.h"
 #include "light/light.h"
@@ -26,7 +27,9 @@ public:
     void setEyeWorldPosition(float x, float y, float z);
     void setMatSpecularIntensity(float value);
     void setMatSpecularPower(float value);
-    void render(glm::mat4* mvpMatrix, glm::mat4* modelMatrix, const glm::vec4& color);
+    void render(const physx::PxMat44& mvpMatrix,
+                const physx::PxMat44& modelMatrix,
+                const physx::PxVec4& color);
     void endRender();
     void reset();
 private:

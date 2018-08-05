@@ -18,10 +18,10 @@ public:
     void killGraphics();
     void addEntity(GameObject* gameObject,
                    GeometryFactory::GeometryType primitive,
-                   glm::vec3 size,
-                   glm::vec4 color);
+                   physx::PxVec3 size,
+                   physx::PxVec4 color);
     void removeEntity(GameObject* gameObject);
-    void render(const glm::mat4x4& viewProjectionMatrix);
+    void render(const physx::PxMat44& viewProjectionMatrix);
 private:
     int m_numComponents = 0;
     Level* m_level = nullptr;
