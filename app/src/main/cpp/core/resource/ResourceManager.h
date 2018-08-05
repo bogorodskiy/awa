@@ -11,7 +11,6 @@ public:
     ResourceManager();
     void connect(AAssetManager* assetManager);
     char* readAsset(const std::string& path);
-    void loadImage();
 private:
     AAssetManager* m_assetManager;
 };

@@ -79,13 +79,13 @@ void Camera::setTarget(GameObject* target) {
 void Camera::rotateH(float degree) {
     m_rotationH += degree;
     // normalize to 0 - 360
-    static const auto one_div_threesixty = 1 / 360.0f;
-    m_rotationH = m_rotationH - std::floor(m_rotationH * one_div_threesixty) * 360.0f;
+    static const auto oneDivThreesixty = 1 / 360.0f;
+    m_rotationH = m_rotationH - std::floor(m_rotationH * oneDivThreesixty) * 360.0f;
     m_rotationChanged = true;
 }
 
 void Camera::update(float dt) {
-    const auto& actorPosition = m_target->getActor()->getGlobalPose().p;
+    const auto& actorPosition = m_target->transform.p;
     if (actorPosition == m_lastActorPosition && !m_rotationChanged) {
         return;
     }
@@ -102,8 +102,8 @@ void Camera::update(float dt) {
     direction.normalize();
 
     auto isOutOfBounds = false;
-    auto minX = m_roomBounds[0];
-    auto maxX = m_roomBounds[1];
+    const auto minX = m_roomBounds[0];
+    const auto maxX = m_roomBounds[1];
     auto distanceX = H_DISTANCE_FROM_TARGET;
     if (cameraX < minX || cameraX > maxX) {
         auto pointX = (cameraX < minX) ? minX - actorPosition.x : maxX - actorPosition.x;
@@ -112,8 +112,8 @@ void Camera::update(float dt) {
         isOutOfBounds = true;
     }
 
-    auto minZ = m_roomBounds[4];
-    auto maxZ = m_roomBounds[5];
+    const auto minZ = m_roomBounds[4];
+    const auto maxZ = m_roomBounds[5];
     auto distanceZ = H_DISTANCE_FROM_TARGET;
     if (cameraZ < minZ || cameraZ > maxZ) {
         auto pointZ = (cameraZ < minZ) ? minZ - actorPosition.z : maxZ - actorPosition.z;

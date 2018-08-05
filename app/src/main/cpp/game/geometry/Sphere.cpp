@@ -17,7 +17,7 @@ Sphere::Sphere(float radius) : Geometry::Geometry(),
     m_numNormals = m_numVertices;
     m_normals = new GLfloat[m_numNormals * 3];
 
-    int vertexCount = 0;
+    auto vertexCount = 0;
     for (auto latNumber = 0; latNumber <= latitudeBands; ++latNumber) {
         auto theta = latNumber * M_PI / (double)latitudeBands;
         auto sinTheta = glm::sin(theta);
@@ -100,13 +100,7 @@ void Sphere::addIndex(int index, GLushort value) {
 }
 
 Sphere::~Sphere() {
-    if (m_vertices != nullptr) {
-        delete[] m_vertices;
-    }
-    if (m_indices != nullptr) {
-        delete [] m_indices;
-    }
-    if (m_normals != nullptr) {
-        delete [] m_normals;
-    }
+    delete[] m_vertices;
+    delete [] m_indices;
+    delete [] m_normals;
 }

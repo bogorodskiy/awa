@@ -5,7 +5,7 @@
 #include "Geometry.h"
 
 class Line : public Geometry {
-    friend class GeometryCache;
+    friend class GeometryFactory;
 
 public:
     virtual GLenum getPrimitive() override;

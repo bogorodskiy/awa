@@ -13,9 +13,7 @@ Line::Line(glm::vec3 start, glm::vec3 end) : Geometry::Geometry(),
 }
 
 Line::~Line() {
-    if (m_vertices != nullptr) {
-        delete[] m_vertices;
-    }
+    delete[] m_vertices;
 }
 
 GLenum Line::getPrimitive() {

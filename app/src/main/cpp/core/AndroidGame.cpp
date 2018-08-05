@@ -70,22 +70,17 @@ void AndroidGame::startGameLoop() {
             }
             deltaTime = (deltaTime < 0.0f) ? 0.0f : (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
 
-
-
             update(deltaTime);
-
-
 
             if (preRender()) {
                 render();
                 postRender();
             }
-
         }
     }
 }
 
-static const char *_log_opengl_error(GLenum err) {
+static const void _log_opengl_error(GLenum err) {
     switch (err) {
         case GL_NO_ERROR:
             LOGE("*** OpenGL error: GL_NO_ERROR");
@@ -389,10 +384,7 @@ bool AndroidGame::initContext() {
         LOGE("Failed to create EGL context, EGL error %d", eglGetError());
         return false;
     }
-
     LOGD("Successfull initialized context.");
-
-
 
     return true;
 }
@@ -455,7 +447,7 @@ float AndroidGame::getCurrentTime() {
 }
 
 void AndroidGame::onResize() {
-
+    LOGD("AndroidGame::onResize");
 }
 
 AndroidGame::~AndroidGame() {

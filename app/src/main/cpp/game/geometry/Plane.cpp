@@ -60,16 +60,9 @@ Plane::Plane(float width, float height) : Geometry::Geometry(),
 
 Plane::~Plane() {
     Geometry::~Geometry();
-
-    if (m_vertices != nullptr) {
-        delete[] m_vertices;
-    }
-    if (m_indices != nullptr) {
-        delete [] m_indices;
-    }
-    if (m_normals != nullptr) {
-        delete [] m_normals;
-    }
+    delete [] m_vertices;
+    delete [] m_indices;
+    delete [] m_normals;
 }
 
 void Plane::initBuffers() {

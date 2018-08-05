@@ -2,31 +2,25 @@
 #define IRONBALLS_GAME_H
 
 #include <memory>
-#include "../core/input/InputSystem.h"
-#include "../core/gameplay/GameObject.h"
-#include "../core/Shader.h"
+#include "systems/graphics/GraphicsSystem.h"
+#include "GameObject.h"
+#include "systems/graphics/Shader.h"
 #include "../core/AndroidGame.h"
-#include "../core/input/TouchLayer.h"
+#include "systems/input/TouchLayer.h"
 #include "geometry/Line.h"
 #include "geometry/Plane.h"
 #include "PxPhysicsAPI.h"
-#include "Room.h"
+#include "Level.h"
 #include "Camera.h"
+#include "systems/physics/PhysicsSystem.h"
+#include "PlayerController.h"
 
-class Game : public AndroidGame, public physx::PxSimulationEventCallback {
+class Game : public AndroidGame {
 public:
     Game(struct android_app *app);
     virtual ~Game();
     virtual void update(float dt) override;
     virtual void render() override;
-
-    // PxSimulationEventCallback
-    virtual void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) override;
-    virtual void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) override;
-    virtual void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) override {};
-    virtual void onWake(physx::PxActor** actors, physx::PxU32 count) override {};
-    virtual void onSleep(physx::PxActor** actors, physx::PxU32 count) override {};
-    virtual void onAdvance(const physx::PxRigidBody*const* bodyBuffer, const physx::PxTransform* poseBuffer, const physx::PxU32 count) override {};
 
 protected:
     virtual void onPause() override;
@@ -35,35 +29,23 @@ protected:
     virtual void killGraphics() override;
     virtual void onResize() override;
 private:
-    bool m_initialized;
+    bool m_initialized = false;
     std::vector<GameObject*> m_balls;
     int m_screenWidth;
     int m_screenHeight;
 
-    // PhysX
-    physx::PxFoundation* m_pxFoundation;
-    physx::PxPhysics* m_pxPhysics;
-    physx::PxScene* m_pxScene;
-    physx::PxReal m_pxTimestep;
-    physx::PxShape** m_pxShapeBuffer;
-
-    Shader m_shader;
-    Room m_room;
+    Level m_level;
     Camera m_camera;
 
     glm::mat4 m_viewMatrix;
     glm::mat4 m_projectionMatrix;
 
-    InputSystem m_inputSystem;
+    PlayerController m_playerController;
+    GraphicsSystem m_graphicsSystem;
+    PhysicsSystem m_physicsSystem;
 
     void initLevel();
     void finalizeLevel();
-    void initPhysX();
-    void finalizePhysX();
-    void renderPxActor(physx::PxRigidActor* actor, Geometry* geometry);
-    GameObject* createBall(int id, float x, float y, float z);
-    bool isPlayer(physx::PxRigidActor* actor);
-    bool isPlane(physx::PxRigidActor* actor);
 };
 
 

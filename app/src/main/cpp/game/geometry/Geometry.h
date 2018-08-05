@@ -6,7 +6,7 @@
 #include "../../core/common.h"
 
 class Geometry {
-    friend class GeometryCache;
+    friend class GeometryFactory;
 
 public:
     int getNumVertices();
@@ -18,8 +18,6 @@ public:
 
     virtual GLenum getPrimitive();
     void setPrimitive(GLenum primitive);
-    glm::vec4* getColor();
-    void setColor(float r, float g, float b, float a);
     void setVertices(GLfloat* data, int numVertices, int stride);
     void setIndices(GLushort* data, int size);
     void setNormals(GLfloat* data, int numNormals, int stride);
@@ -38,9 +36,9 @@ public:
     void deleteBuffers();
 
 protected:
-    int m_numVertices;
-    int m_numIndices;
-    int m_numNormals;
+    int m_numVertices = 0;
+    int m_numIndices = 0;
+    int m_numNormals = 0;
 
     float m_specularIntensity;
     float m_specularPower;
@@ -50,14 +48,12 @@ protected:
 
 private:
     GLenum m_primitive;
-    glm::vec4 m_color;
+    GLuint m_vbo = 0;
+    GLuint m_ibo = 0;
+    GLuint m_nbo = 0;
 
-    GLuint m_vbo;
-    GLuint m_ibo;
-    GLuint m_nbo;
-
-    int m_verticesStride;
-    int m_normalsStride;
+    int m_verticesStride = 0;
+    int m_normalsStride = 0;
 };
 
 

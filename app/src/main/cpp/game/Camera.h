@@ -3,7 +3,7 @@
 
 #include <foundation/PxVec4.h>
 #include <foundation/PxVec2.h>
-#include "../core/gameplay/GameObject.h"
+#include "GameObject.h"
 
 class Camera {
 public:

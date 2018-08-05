@@ -1,34 +1,14 @@
 #include "Geometry.h"
 
 Geometry::Geometry():
-        m_numVertices(0),
-        m_numIndices(0),
-        m_numNormals(0),
         m_specularIntensity(0.0f),
         m_specularPower(0.0f),
-        m_primitive(GL_TRIANGLES),
-        m_color(0.0f, 0.0f, 0.0f, 0.0f),
-        m_vbo(0),
-        m_ibo(0),
-        m_nbo(0),
-        m_verticesStride(0),
-        m_normalsStride(0)
+        m_primitive(GL_TRIANGLES)
 {
 }
 
 Geometry::~Geometry() {
     deleteBuffers();
-}
-
-glm::vec4* Geometry::getColor() {
-    return &m_color;
-}
-
-void Geometry::setColor(float r, float g, float b, float a) {
-    m_color.r = r;
-    m_color.g = g;
-    m_color.b = b;
-    m_color.a = a;
 }
 
 int Geometry::getNumVertices() {

@@ -6,7 +6,7 @@
 
 //The Plane lies on the YZ plane with "above" pointing towards positive X
 class Plane : public Geometry {
-    friend class GeometryCache;
+    friend class GeometryFactory;
 
 public:
     virtual GLenum getPrimitive() override;

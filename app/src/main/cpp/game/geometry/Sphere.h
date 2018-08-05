@@ -4,7 +4,7 @@
 #include "Geometry.h"
 
 class Sphere : public Geometry {
-    friend class GeometryCache;
+    friend class GeometryFactory;
 public:
     virtual void initBuffers() override;
 private:

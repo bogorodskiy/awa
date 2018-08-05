@@ -64,10 +64,10 @@ vec4 calcPointLight(int index, vec3 normal)
     lightDirection = normalize(lightDirection);
 
     vec4 color = calcLightInternal(u_pointLights[index].base, lightDirection, normal);
-    float attenuation =  u_pointLights[index].attenuation.constantFactor +
-                         u_pointLights[index].attenuation.linearFactor * distance +
-                         u_pointLights[index].attenuation.exponentialFactor * distance * distance;
-
+    Attenuation attenuationObject = u_pointLights[index].attenuation;
+    float attenuation =  attenuationObject.constantFactor +
+                         attenuationObject.linearFactor * distance +
+                         attenuationObject.exponentialFactor * distance * distance;
     return color / attenuation;
 }
 
@@ -78,4 +78,5 @@ void main() {
         result += calcPointLight(i, normal);
     }
     fragColor = u_color * result;
+    //fragColor = result;
 }

@@ -12,7 +12,7 @@ extern "C" {
 
 #include <time.h>
 #include "common.h"
-#include "../core/input/TouchLayer.h"
+#include "../game/systems/input/TouchLayer.h"
 #include "stdlib.h"
 
 struct AndroidGameSavedState {
@@ -26,7 +26,7 @@ public:
     TouchLayer inputTouchLayer;
 
     AndroidGame(struct android_app *app);
-    ~AndroidGame();
+    virtual ~AndroidGame();
 
     bool getIsAnimating();
 
