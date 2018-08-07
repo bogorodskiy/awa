@@ -9,21 +9,25 @@ class Geometry {
     friend class GeometryFactory;
 
 public:
-    int getNumVertices();
-    int getNumIndices();
-    int getNumNormals();
+    enum class Type{
+        NONE, SPHERE, PLANE
+    };
 
-    int getVerticesStride();
-    int getNormalsStride();
+    int getNumVertices() const;
+    int getNumIndices() const;
+    int getNumNormals() const;
 
-    virtual GLenum getPrimitive();
-    void setPrimitive(GLenum primitive);
+    int getVerticesStride() const;
+    int getNormalsStride() const;
+
+    virtual GLenum getPrimitive() const;
+    Type getType() const;
     void setVertices(GLfloat* data, int numVertices, int stride);
     void setIndices(GLushort* data, int size);
     void setNormals(GLfloat* data, int numNormals, int stride);
 
-    float getSpecularIntensity();
-    float getSpecularPower();
+    float getSpecularIntensity() const;
+    float getSpecularPower() const;
 
     void bindVertexBuffer();
     void bindIndexBuffer();
@@ -36,6 +40,8 @@ public:
     void deleteBuffers();
 
 protected:
+    Type m_type = Type::NONE;
+
     int m_numVertices = 0;
     int m_numIndices = 0;
     int m_numNormals = 0;
@@ -47,7 +53,7 @@ protected:
     virtual ~Geometry();
 
 private:
-    GLenum m_primitive;
+    GLenum m_primitive = GL_TRIANGLES;
     GLuint m_vbo = 0;
     GLuint m_ibo = 0;
     GLuint m_nbo = 0;

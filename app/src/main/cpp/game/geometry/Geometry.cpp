@@ -2,8 +2,7 @@
 
 Geometry::Geometry():
         m_specularIntensity(0.0f),
-        m_specularPower(0.0f),
-        m_primitive(GL_TRIANGLES)
+        m_specularPower(0.0f)
 {
 }
 
@@ -11,32 +10,32 @@ Geometry::~Geometry() {
     deleteBuffers();
 }
 
-int Geometry::getNumVertices() {
+int Geometry::getNumVertices() const {
     return m_numVertices;
 }
 
-int Geometry::getNumIndices() {
+int Geometry::getNumIndices() const {
     return m_numIndices;
 }
 
-int Geometry::getNumNormals() {
+int Geometry::getNumNormals() const {
     return m_numNormals;
 }
 
-int Geometry::getVerticesStride() {
+int Geometry::getVerticesStride() const {
     return m_verticesStride;
 }
 
-int Geometry::getNormalsStride() {
+int Geometry::getNormalsStride() const {
     return m_normalsStride;
 }
 
-GLenum Geometry::getPrimitive() {
+GLenum Geometry::getPrimitive() const {
     return m_primitive;
 }
 
-void Geometry::setPrimitive(GLenum primitive) {
-    m_primitive = primitive;
+Geometry::Type Geometry::getType() const {
+    return m_type;
 }
 
 void Geometry::setVertices(GLfloat* data, int numVertices, int stride) {
@@ -72,11 +71,11 @@ void Geometry::setNormals(GLfloat* data, int numNormals, int stride)
     unbindNormalBuffer();
 }
 
-float Geometry::getSpecularIntensity() {
+float Geometry::getSpecularIntensity() const {
     return m_specularIntensity;
 }
 
-float Geometry::getSpecularPower() {
+float Geometry::getSpecularPower() const {
     return m_specularPower;
 }
 

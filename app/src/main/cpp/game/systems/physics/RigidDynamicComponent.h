@@ -2,7 +2,7 @@
 #ifndef AWA_RIGIDDYNAMICCOMPONENT_H
 #define AWA_RIGIDDYNAMICCOMPONENT_H
 
-
+#include "PxRigidDynamic.h"
 #include "../GameObjectComponent.h"
 
 class RigidDynamicComponent: public GameObjectComponent {
@@ -12,20 +12,20 @@ public:
     static const physx::PxReal ANGULAR_DAMPING;
     static const physx::PxReal LINEAR_DAMPING;
 
-    RigidDynamicComponent(physx::PxPhysics* pxPhysics,
-                          physx::PxScene* pxScene,
-                          physx::PxMaterial* material,
-                          GameObject* gameObject);
+    void fillWith(physx::PxPhysics* pxPhysics,
+                  physx::PxScene* pxScene,
+                  physx::PxMaterial* material,
+                  physx::PxSphereGeometry geometry,
+                  GameObject* gameObject);
+    void fillWith(const RigidDynamicComponent& source);
+    void reset(bool finalize);
     ~RigidDynamicComponent();
 
     void addForce(physx::PxVec3 force);
-    physx::PxVec3 getGravity() const;
-    void setGravity(float x, float y, float z);
     void update(float dt);
 private:
     physx::PxRigidDynamic* m_pxActor = nullptr;
     physx::PxShape* m_pxShape = nullptr;
-    physx::PxVec3 m_gravity;
 };
 
 

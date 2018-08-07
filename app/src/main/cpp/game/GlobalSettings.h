@@ -10,6 +10,7 @@ public:
     static const float NEAR_CLIPPING;
     static const float FAR_CLIPPING;
     static const float FIELD_OF_VIEW;
+    static const float DEFAULT_GRAVITY;
     static const std::string VERTEX_SHADER_PATH;
     static const std::string FRAGMENT_SHADER_PATH;
 };

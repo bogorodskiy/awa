@@ -2,23 +2,23 @@
 #define IRON_BALLS_GAMEOBJECT_H
 
 class GameObjectComponent;
-#include <PxRigidDynamic.h>
-#include "geometry/Geometry.h"
+#include "PxTransform.h"
 #include "systems/GameObjectComponent.h"
 
 class GameObject {
 public:
+    bool transformChanged = true;
     physx::PxTransform transform;
-    Geometry* geometry = nullptr;
 
-    // TODO: add hp
-
-    GameObject(int id);
+    GameObject(int id, int health);
     ~GameObject();
 
     int getId() const;
+    int getHealth() const;
+    void addDamage(int value);
 private:
-    int m_id;
+    int m_id = -1;
+    int m_health = 0;
 };
 
 

@@ -1,6 +1,7 @@
 #include "PhysicsSystem.h"
 #include "PxPhysicsAPI.h"
 #include "../../geometry/GeometryFactory.h"
+#include "../../GlobalSettings.h"
 
 // PHYSX CONTACT FILTER
 
@@ -21,9 +22,6 @@ physx::PxFilterFlags GameContactReportFilterShader(
 const physx::PxReal PhysicsSystem::STATIC_FRICTION = 0.5;
 const physx::PxReal PhysicsSystem::DYNAMIC_FRICTION = 0.5;
 const physx::PxReal PhysicsSystem::RESTITUTION = 0.5;
-
-PhysicsSystem::PhysicsSystem() {
-}
 
 PhysicsSystem::~PhysicsSystem() {
     m_pxMaterial->release();
@@ -68,6 +66,7 @@ bool PhysicsSystem::initialize() {
     }
     sceneDescription.simulationEventCallback = this;
     sceneDescription.filterShader = GameContactReportFilterShader;
+    sceneDescription.gravity = physx::PxVec3(0.0f, GlobalSettings::DEFAULT_GRAVITY, 0.0f);
     sceneDescription.flags |= physx::PxSceneFlag::eENABLE_PCM;
     sceneDescription.flags |= physx::PxSceneFlag::eENABLE_STABILIZATION;
     sceneDescription.flags |= physx::PxSceneFlag::eENABLE_ACTIVETRANSFORMS;
@@ -96,34 +95,27 @@ std::shared_ptr<RigidDynamicComponent> PhysicsSystem::getDynamicComponent(GameOb
 }
 
 void PhysicsSystem::addDynamicEntity(GameObject* gameObject,
-                              GeometryFactory::GeometryType primitive,
-                                     physx::PxVec3 size) {
-    auto component = std::make_shared<RigidDynamicComponent>(m_pxPhysics,
-                                                             m_pxScene,
-                                                             m_pxMaterial,
-                                                             gameObject);
+                                     float radius) {
     if (m_numDynamicComponents == m_dynamicComponents.size()) {
-        m_dynamicComponents.emplace_back(component);
+        m_dynamicComponents.emplace_back(std::make_shared<RigidDynamicComponent>());
     }
-    else{
-        m_dynamicComponents[m_numDynamicComponents] = component;
-    }
+    m_dynamicComponents[m_numDynamicComponents]->fillWith(m_pxPhysics,
+                                                          m_pxScene,
+                                                          m_pxMaterial,
+                                                          physx::PxSphereGeometry(radius),
+                                                          gameObject);
     ++m_numDynamicComponents;
 }
 
-void PhysicsSystem::addStaticEntity(GameObject* gameObject,
-                                     GeometryFactory::GeometryType primitive,
-                                    physx::PxVec3 size) {
-    auto component = std::make_shared<RigidStaticComponent>(m_pxPhysics,
-                                                            m_pxScene,
-                                                            m_pxMaterial,
-                                                            gameObject);
+void PhysicsSystem::addStaticEntity(GameObject* gameObject) {
     if (m_numStaticComponents == m_staticComponents.size()) {
-        m_staticComponents.emplace_back(component);
+        m_staticComponents.emplace_back(std::make_shared<RigidStaticComponent>());
     }
-    else{
-        m_staticComponents[m_numStaticComponents] = component;
-    }
+    m_staticComponents[m_numStaticComponents]->fillWith(m_pxPhysics,
+                                                        m_pxScene,
+                                                        m_pxMaterial,
+                                                        physx::PxPlaneGeometry(),
+                                                        gameObject);
     ++m_numStaticComponents;
 }
 
@@ -147,50 +139,52 @@ void PhysicsSystem::update(float dt) {
     }
 }
 
-bool PhysicsSystem::isPlayer(physx::PxRigidActor* actor) {
+bool PhysicsSystem::isDynamic(physx::PxRigidActor* actor) {
     return actor->getType() == physx::PxActorType::eRIGID_DYNAMIC;
 }
 
-bool PhysicsSystem::isPlane(physx::PxRigidActor* actor) {
-    return actor->getType() == physx::PxActorType::eRIGID_STATIC;
+void PhysicsSystem::reset() {
+    m_dynamicComponents.clear();
+    m_staticComponents.clear();
 }
 
 // -----  PxSimulationEventCallback interface methods -----
 
 // called before actors moved(detected early on during the simulation)
 void PhysicsSystem::onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
-//    static const physx::PxU32 bufferSize = 64;
-//    physx::PxContactPairPoint contacts[bufferSize];
-//
-//    for (physx::PxU32 i = 0; i < nbPairs; i++)
-//    {
-//        const physx::PxContactPair& contactPair = pairs[i];
-//
-//        if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
-//        {
-//            auto actor1 = pairHeader.actors[0];
-//            auto actor2 = pairHeader.actors[1];
-//            GameObject* player = nullptr;
-//            if (isPlayer(actor1) && isPlane(actor2)) {
-//                player = static_cast<GameObject*>(actor1->userData);
-//            }
-//            else if (isPlayer(actor2) && isPlane(actor1)) {
-//                player = static_cast<GameObject*>(actor1->userData);
-//            }
-//
-//            if (player) {
-//                auto numContacts = contactPair.extractContacts(contacts, bufferSize);
-//                for (physx::PxU32 j = 0; j < numContacts; ++j) {
-//                    auto point = contacts[j].position;
-//                    auto playerPosition = player->getActor()->getGlobalPose().p;
-//                    auto contactVec = point - playerPosition;
-//                    contactVec.normalize();
-//                    player->setGravity(contactVec.x, contactVec.y, contactVec.z);
-//                    break;
-//                }
-//            }
-//        }
-//    }
+    static const physx::PxU32 bufferSize = 64;
+    physx::PxContactPairPoint contacts[bufferSize];
+
+    for (physx::PxU32 i = 0; i < nbPairs; i++)
+    {
+        const physx::PxContactPair& contactPair = pairs[i];
+
+        if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
+        {
+            auto actorA = pairHeader.actors[0];
+            auto actorB = pairHeader.actors[1];
+            GameObject* gameObjectA = nullptr;
+            GameObject* gameObjectB = nullptr;
+            if (isDynamic(actorA) && isDynamic(actorB)) {
+                gameObjectA = static_cast<GameObject*>(actorA->userData);
+                gameObjectB = static_cast<GameObject*>(actorB->userData);
+            }
+
+            if (gameObjectA != nullptr) {
+                auto numContacts = contactPair.extractContacts(contacts, bufferSize);
+                for (physx::PxU32 j = 0; j < numContacts; ++j) {
+                    auto contact = contacts[j];
+                    LOGD("+++ COLLISION IMPULSE = %f", contact.impulse.magnitude());
+                    auto point = contact.position;
+                    auto aPosition = gameObjectA->transform.p;
+                    auto bPosition = gameObjectB->transform.p;
+                    auto contactVec = point - aPosition;
+                    contactVec.normalize();
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void PhysicsSystem::onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {

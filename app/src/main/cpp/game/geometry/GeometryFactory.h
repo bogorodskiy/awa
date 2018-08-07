@@ -8,17 +8,13 @@
 
 class GeometryFactory {
 public:
-    enum class GeometryType{
-        SPHERE, PLANE
-    };
-
     static GeometryFactory* getInstance();
     Geometry* getSphere(float radius);
     Geometry* getPlane(float width, float height);
     void connect();
     void disconnect();
 private:
-    std::map<GeometryType, Geometry*> m_geometries;
+    std::map<Geometry::Type, Geometry*> m_geometries;
     std::vector<Geometry*> m_uniqueGeometries;
     bool m_graphicsReady;
 

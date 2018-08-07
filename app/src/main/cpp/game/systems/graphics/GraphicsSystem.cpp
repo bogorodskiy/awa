@@ -6,11 +6,9 @@
 GraphicsSystem::GraphicsSystem() {
 }
 
-bool GraphicsSystem::initialize(Camera* camera, Level* room) {
+bool GraphicsSystem::initialize(Camera* camera, Level* level) {
     m_camera = camera;
-    m_level = room;
-    // TODO:
-    m_components.reserve(0);
+    m_level = level;
     return true;
 }
 
@@ -57,17 +55,13 @@ void GraphicsSystem::killGraphics()
 }
 
 void GraphicsSystem::addEntity(GameObject* gameObject,
-                               GeometryFactory::GeometryType primitive,
+                               Geometry::Type geometryType,
                                physx::PxVec3 size,
                                physx::PxVec4 color) {
-
-    auto component = std::make_shared<GraphicsComponent>(gameObject, primitive, size, color);
     if (m_numComponents == m_components.size()) {
-        m_components.emplace_back(component);
+        m_components.emplace_back(std::make_shared<GraphicsComponent>());
     }
-    else{
-        m_components[m_numComponents] = component;
-    }
+    m_components[m_numComponents]->fillWith(gameObject, geometryType, size, color);
     ++m_numComponents;
 }
 
@@ -86,13 +80,11 @@ void GraphicsSystem::removeEntity(GameObject* gameObject) {
         return;
     }
 
+    m_components[position]->reset();
     if (m_numComponents > 1)
     {
-        m_components[position] = m_components[m_numComponents - 1];
-        m_components[m_numComponents - 1] = nullptr;
-    }
-    else {
-        m_components[position] = nullptr;
+        m_components[position]->fillWith(*m_components[m_numComponents - 1]);
+        m_components[m_numComponents - 1]->reset();
     }
 
     --m_numComponents;
@@ -105,11 +97,26 @@ void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
     m_shader.setEyeWorldPosition(position.x, position.y, position.z);
 
     for (auto& component : m_components) {
-        auto modelMatrix = component->getModelMatrix();
+        component->preRender();
+
+        const auto& modelMatrix = component->getModelMatrix();
         auto mvpMatrix = viewProjectionMatrix * modelMatrix;
-        m_shader.beginRender(component->geometry);
-        m_shader.render(mvpMatrix, modelMatrix, component->color);
-        m_shader.endRender();
+
+        if (m_lastGeometryType != component->geometry->getType()) {
+            m_lastGeometryType = component->geometry->getType();
+
+            m_shader.endRender();
+            m_shader.beginRender(component->geometry);
+            m_shader.render(mvpMatrix, modelMatrix, component->color);
+        }
+        else {
+            m_shader.render(mvpMatrix, modelMatrix, component->color);
+        }
     }
+    m_shader.endRender();
     m_shader.unbind();
+}
+
+void GraphicsSystem::reset() {
+    m_components.clear();
 }

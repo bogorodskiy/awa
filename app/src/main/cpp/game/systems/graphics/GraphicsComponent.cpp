@@ -1,34 +1,51 @@
 
 #include "GraphicsComponent.h"
-#include <PxMat44.h>
+#include "PxMat44.h"
 
-GraphicsComponent::GraphicsComponent(GameObject* gameObject,
-                                     GeometryFactory::GeometryType primitive,
-                                     physx::PxVec3 size,
-                                     physx::PxVec4 color) : GameObjectComponent(gameObject) {
-    geometry = createGeometry(primitive, size);
+const physx::PxMat44& GraphicsComponent::getModelMatrix() const {
+    return m_modelMatrix;
+}
+
+void GraphicsComponent::fillWith(GameObject* gameObject,
+                                 Geometry::Type geometryType,
+                                 physx::PxVec3 size,
+                                 physx::PxVec4 color) {
+    m_gameObject = gameObject;
+    geometry = createGeometry(geometryType, size);
     this->color = color;
 }
 
-physx::PxMat44 GraphicsComponent::getModelMatrix() {
-    return physx::PxMat44(m_gameObject->transform);
+void GraphicsComponent::fillWith(const GraphicsComponent& source) {
+    geometry = source.geometry;
+    m_gameObject = source.m_gameObject;
 }
 
-Geometry* GraphicsComponent::createGeometry(GeometryFactory::GeometryType primitive, physx::PxVec3 size)
+void GraphicsComponent::preRender() {
+    if (m_gameObject->transformChanged) {
+        m_modelMatrix = physx::PxMat44(m_gameObject->transform);
+    }
+}
+
+Geometry* GraphicsComponent::createGeometry(Geometry::Type geometryType, physx::PxVec3 size)
 {
     Geometry* result = nullptr;
-    switch(primitive)
+    switch(geometryType)
     {
-        case GeometryFactory::GeometryType::PLANE:
+        case Geometry::Type::PLANE:
         {
             result = GeometryFactory::getInstance()->getPlane(size.x, size.y);
             break;
         }
-        case GeometryFactory::GeometryType::SPHERE:
+        case Geometry::Type::SPHERE:
         {
             result = GeometryFactory::getInstance()->getSphere(size.x);
             break;
         }
     }
     return result;
+}
+
+void GraphicsComponent::reset() {
+    geometry = nullptr;
+    m_gameObject = nullptr;
 }

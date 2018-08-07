@@ -12,13 +12,18 @@ public:
     Geometry* geometry;
     physx::PxVec4 color;
 
-    GraphicsComponent(GameObject* gameObject,
-                      GeometryFactory::GeometryType primitive,
-                      physx::PxVec3 size,
-                      physx::PxVec4 color);
-    physx::PxMat44 getModelMatrix();
+    const physx::PxMat44& getModelMatrix() const;
+    void fillWith(GameObject* gameObject,
+                  Geometry::Type geometryType,
+                  physx::PxVec3 size,
+                  physx::PxVec4 color);
+    void fillWith(const GraphicsComponent& source);
+    void preRender();
+    void reset();
 private:
-    Geometry* createGeometry(GeometryFactory::GeometryType primitive, physx::PxVec3 size);
+    physx::PxMat44 m_modelMatrix;
+
+    Geometry* createGeometry(Geometry::Type geometryType, physx::PxVec3 size);
 };
 
 

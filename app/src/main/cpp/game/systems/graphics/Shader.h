@@ -8,7 +8,6 @@
 #include <foundation/PxMat44.h>
 #include "../../../core/common.h"
 #include "../../geometry/Geometry.h"
-#include "light/light.h"
 #include "light/PointLight.h"
 
 class Shader {

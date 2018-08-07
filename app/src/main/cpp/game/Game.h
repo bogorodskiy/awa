@@ -28,8 +28,9 @@ protected:
 private:
     bool m_initialized = false;
     std::vector<GameObject*> m_balls;
-    int m_screenWidth;
-    int m_screenHeight;
+    int m_screenWidth = 0;
+    int m_screenHeight = 0;
+    int m_lastFreeId = 0;
 
     Level m_level;
     Camera m_camera;
@@ -39,7 +40,6 @@ private:
     PhysicsSystem m_physicsSystem;
 
     void initLevel();
-    void finalizeLevel();
 };
 
 

@@ -23,15 +23,15 @@ GeometryFactory* GeometryFactory::getInstance() {
 }
 
 Geometry* GeometryFactory::getSphere(float radius) {
-    if (m_geometries.find(GeometryType::SPHERE) != m_geometries.end()) {
-        return m_geometries[GeometryType::SPHERE];
+    if (m_geometries.find(Geometry::Type::SPHERE) != m_geometries.end()) {
+        return m_geometries[Geometry::Type::SPHERE];
     }
 
     auto sphere = new Sphere(radius);
     if (m_graphicsReady) {
         sphere->initBuffers();
     }
-    m_geometries[GeometryType::SPHERE] = sphere;
+    m_geometries[Geometry::Type::SPHERE] = sphere;
     return sphere;
 }
 

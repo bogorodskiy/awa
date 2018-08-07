@@ -1,10 +1,9 @@
 #include "Plane.h"
 
-Plane::Plane(float width, float height) : Geometry::Geometry(),
-                 m_vertices(nullptr),
-                 m_indices(nullptr),
-                 m_normals(nullptr)
+Plane::Plane(float width, float height) : Geometry::Geometry()
 {
+    m_type = Geometry::Type::PLANE;
+
     m_numVertices = 4;
     m_vertices = new GLfloat[3 * m_numVertices];
 
@@ -69,8 +68,4 @@ void Plane::initBuffers() {
     setVertices(m_vertices, m_numVertices, 3 * sizeof(GLfloat));
     setIndices(m_indices, m_numIndices * sizeof(GLushort));
     setNormals(m_normals, m_numNormals, 3 * sizeof(GLfloat));
-}
-
-GLenum Plane::getPrimitive() {
-    return GL_TRIANGLES;
 }

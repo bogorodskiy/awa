@@ -8,9 +8,9 @@ class Sphere : public Geometry {
 public:
     virtual void initBuffers() override;
 private:
-    GLfloat* m_vertices;
-    GLfloat* m_normals;
-    GLushort* m_indices;
+    GLfloat* m_vertices = nullptr;
+    GLfloat* m_normals = nullptr;
+    GLushort* m_indices = nullptr;
 
     Sphere(float radius);
     virtual ~Sphere();

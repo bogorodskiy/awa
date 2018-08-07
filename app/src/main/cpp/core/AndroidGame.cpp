@@ -46,7 +46,7 @@ void AndroidGame::startGameLoop() {
     m_app->onAppCmd = onAppCommand;
     m_app->onInputEvent = onAppInput;
 
-    while (1) {
+    while (true) {
         int ident;
         int events;
 
@@ -62,13 +62,11 @@ void AndroidGame::startGameLoop() {
             }
         }
 
+        // TODO: fix with gafferongames article
         if (getIsAnimating()) {
             float deltaTime = getCurrentTime() - m_lastTime;
             m_lastTime = getCurrentTime();
-            if (deltaTime > MAX_DELTA_TIME) {
-                LOGD("Delta time > max delta, %f", deltaTime);
-            }
-            deltaTime = (deltaTime < 0.0f) ? 0.0f : (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
+            deltaTime = (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
 
             update(deltaTime);
 

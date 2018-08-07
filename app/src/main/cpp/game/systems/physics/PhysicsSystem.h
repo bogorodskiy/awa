@@ -2,6 +2,7 @@
 #define AWA_PHYSICSSYSTEM_H
 
 #include <vector>
+#include <map>
 #include "../../GameObject.h"
 #include "../GameObjectComponent.h"
 #include "RigidDynamicComponent.h"
@@ -15,17 +16,13 @@ public:
     static const physx::PxReal DYNAMIC_FRICTION;
     static const physx::PxReal RESTITUTION;
 
-    PhysicsSystem();
     ~PhysicsSystem();
     bool initialize();
 
     std::shared_ptr<RigidDynamicComponent> getDynamicComponent(GameObject* gameObject);
     void addDynamicEntity(GameObject* gameObject,
-                          GeometryFactory::GeometryType primitive,
-                          physx::PxVec3 size);
-    void addStaticEntity(GameObject* gameObject,
-                         GeometryFactory::GeometryType primitive,
-                         physx::PxVec3 size);
+                          float radius);
+    void addStaticEntity(GameObject* gameObject);
     void removeDynamicEntity(GameObject* gameObject);
     void removeStaticEntity(GameObject* gameObject);
     void update(float dt);
@@ -38,8 +35,9 @@ public:
     virtual void onSleep(physx::PxActor** actors, physx::PxU32 count) override {};
     virtual void onAdvance(const physx::PxRigidBody*const* bodyBuffer, const physx::PxTransform* poseBuffer, const physx::PxU32 count) override {};
 
-    bool isPlayer(physx::PxRigidActor* actor);
-    bool isPlane(physx::PxRigidActor* actor);
+    bool isDynamic(physx::PxRigidActor* actor);
+
+    void reset();
 
 private:
     int m_numDynamicComponents = 0;
@@ -68,13 +66,11 @@ private:
             return;
         }
 
+        container[position]->reset(true);
         if (numComponents > 1)
         {
-            container[position] = container[numComponents - 1];
-            container[numComponents - 1] = nullptr;
-        }
-        else {
-            container[position] = nullptr;
+            container[position]->fillWith(*container[numComponents - 1]);
+            container[numComponents - 1]->reset(false);
         }
         --numComponents;
     }

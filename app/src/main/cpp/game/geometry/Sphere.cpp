@@ -1,11 +1,10 @@
 #include <cmath>
 #include "Sphere.h"
 
-Sphere::Sphere(float radius) : Geometry::Geometry(),
-                   m_vertices(nullptr),
-                   m_normals(nullptr),
-                   m_indices(nullptr)
+Sphere::Sphere(float radius) : Geometry::Geometry()
 {
+    m_type = Geometry::Type::SPHERE;
+
     auto latitudeBands = 31;
     auto longitudeBands = 31;
     auto index = 0;
