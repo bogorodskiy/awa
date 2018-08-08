@@ -76,7 +76,7 @@ void GraphicsSystem::removeEntity(GameObject* gameObject) {
     }
     if (position == m_numComponents)
     {
-        LOGE("Unable to find gameObject with id %i in GraphicsSystem components", gameObject->getId());
+        LOGE("+++ Unable to find gameObject with id %i in GraphicsSystem components", gameObject->getId());
         return;
     }
 
@@ -95,15 +95,17 @@ void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
     m_shader.setPointLights(m_level->getPointLights());
     auto position = m_camera->getPosition();
     m_shader.setEyeWorldPosition(position.x, position.y, position.z);
+    auto lastGeometryType = Geometry::Type::NONE;
 
-    for (auto& component : m_components) {
+    for (auto i = 0; i < m_numComponents; ++i) {
+        auto& component = m_components[i];
         component->preRender();
 
         const auto& modelMatrix = component->getModelMatrix();
         auto mvpMatrix = viewProjectionMatrix * modelMatrix;
 
-        if (m_lastGeometryType != component->geometry->getType()) {
-            m_lastGeometryType = component->geometry->getType();
+        if (lastGeometryType != component->geometry->getType()) {
+            lastGeometryType = component->geometry->getType();
 
             m_shader.endRender();
             m_shader.beginRender(component->geometry);

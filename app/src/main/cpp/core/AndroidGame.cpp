@@ -1,7 +1,9 @@
+#include <chrono>
+#include <ctime>
 #include "AndroidGame.h"
 #include "resource/ResourceManager.h"
 
-const float AndroidGame::MAX_DELTA_TIME = 0.05f;
+const float AndroidGame::SIMULATION_TIME = 0.015f;
 
 static void onAppCommand(struct android_app* app, int32_t cmd) {
     AndroidGame* game = (AndroidGame*) app->userData;
@@ -9,8 +11,8 @@ static void onAppCommand(struct android_app* app, int32_t cmd) {
 }
 
 static int onAppInput(struct android_app* app, AInputEvent* event) {
-    AndroidGame *game = (AndroidGame*) app->userData;
-    return game->inputTouchLayer.processInputEvent(event) ? 1 : 0;
+    AndroidGame* game = static_cast<AndroidGame*>(app->userData);
+    return game->onInputEvent(event);
 }
 
 AndroidGame::AndroidGame(struct android_app *app) :
@@ -33,11 +35,10 @@ AndroidGame::AndroidGame(struct android_app *app) :
         m_state = *(struct AndroidGameSavedState*) m_app->savedState;
     }
 
-    m_lastTime = getCurrentTime();
     ResourceManager::getInstance().connect(m_app->activity->assetManager);
 }
 
-bool AndroidGame::getIsAnimating() {
+inline bool AndroidGame::getIsAnimating() {
     return m_hasFocus && m_isVisible && m_hasWindow;
 }
 
@@ -46,13 +47,16 @@ void AndroidGame::startGameLoop() {
     m_app->onAppCmd = onAppCommand;
     m_app->onInputEvent = onAppInput;
 
+    m_lastUpdateTime = getCurrentTime();
+    auto accumulator = 0.0;
+
     while (true) {
-        int ident;
+        int result;
         int events;
 
         struct android_poll_source* source;
 
-        while ( (ident = ALooper_pollAll(getIsAnimating() ? 0 : -1, NULL, &events, (void**)&source)) > 0 ) {
+        while ( (result = ALooper_pollAll(getIsAnimating() ? 0 : -1, NULL, &events, (void**)&source)) > 0 ) {
             if (source != NULL) {
                 source->process(m_app, source);
             }
@@ -62,13 +66,18 @@ void AndroidGame::startGameLoop() {
             }
         }
 
-        // TODO: fix with gafferongames article
-        if (getIsAnimating()) {
-            float deltaTime = getCurrentTime() - m_lastTime;
-            m_lastTime = getCurrentTime();
-            deltaTime = (deltaTime > MAX_DELTA_TIME) ? MAX_DELTA_TIME : deltaTime;
+        using namespace std::chrono;
 
-            update(deltaTime);
+        if (getIsAnimating()) {
+            auto currentTime = getCurrentTime();
+            auto deltaTime = currentTime - m_lastUpdateTime;
+            m_lastUpdateTime = currentTime;
+
+            accumulator += deltaTime;
+            while (accumulator >= SIMULATION_TIME) {
+                update(static_cast<float>(deltaTime));
+                accumulator -= deltaTime;
+            }
 
             if (preRender()) {
                 render();
@@ -177,7 +186,7 @@ void AndroidGame::render() {
 void AndroidGame::postRender() {
     auto swapResult = eglSwapBuffers(m_eglDisplay, m_eglSurface);
     if (swapResult == EGL_FALSE) {
-        LOGW("eglSwapBuffers failed, EGL error %d", eglGetError());
+        LOGE("eglSwapBuffers failed, EGL error %d", eglGetError());
         handleEglError(eglGetError());
         return;
     }
@@ -189,7 +198,7 @@ void AndroidGame::postRender() {
             _log_opengl_error(error);
             ++errorsPrinted;
             if (errorsPrinted >= 10) {
-                LOGE("*** TOO MANY OPENGL ERRORS. NO LONGER PRINTING.");
+                break;
             }
         }
     }
@@ -342,7 +351,7 @@ bool AndroidGame::initSurface() {
     eglGetConfigAttrib(m_eglDisplay, m_eglConfig, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow* window = m_app->window;
     bool hasWindow = (window != NULL);
-    if (hasWindow == false) {
+    if (!hasWindow) {
         LOGD("App has no window");
         return false;
     }
@@ -362,7 +371,7 @@ bool AndroidGame::initSurface() {
 
 bool AndroidGame::initContext() {
     if (m_eglDisplay == EGL_NO_DISPLAY) {
-        LOGE("Unable to init context, there us no display");
+        LOGE("Unable to init context, there is no display");
         return false;
     }
 
@@ -374,7 +383,7 @@ bool AndroidGame::initContext() {
         return true;
     }
 
-    LOGD("Initializing context.");
+    LOGD("Initializing context");
 
     // create EGL context
     m_eglContext = eglCreateContext(m_eglDisplay, m_eglConfig, NULL, attribList);
@@ -382,7 +391,7 @@ bool AndroidGame::initContext() {
         LOGE("Failed to create EGL context, EGL error %d", eglGetError());
         return false;
     }
-    LOGD("Successfull initialized context.");
+    LOGD("Context initialized");
 
     return true;
 }
@@ -428,20 +437,12 @@ void AndroidGame::finalizeContext() {
     LOGD("Context killed successfully.");
 }
 
-float AndroidGame::getCurrentTime() {
-    static struct timespec startTime;
-    static bool firstCall = true;
+double AndroidGame::getCurrentTime() {
+    using namespace std::chrono;
 
-    if (firstCall) {
-        clock_gettime(CLOCK_MONOTONIC, &startTime);
-        firstCall = false;
-    }
-
-    struct timespec time;
-    clock_gettime(CLOCK_MONOTONIC, &time);
-    float secDiff = (float)(time.tv_sec - startTime.tv_sec);
-    float msecDiff = (float)((time.tv_nsec - startTime.tv_nsec) / 1000000);
-    return secDiff + 0.001f * msecDiff;
+    auto now = high_resolution_clock::now();
+    auto secondsTime = duration_cast<duration<double>>(now.time_since_epoch());
+    return secondsTime.count();
 }
 
 void AndroidGame::onResize() {

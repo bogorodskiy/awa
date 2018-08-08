@@ -22,6 +22,7 @@ physx::PxFilterFlags GameContactReportFilterShader(
 const physx::PxReal PhysicsSystem::STATIC_FRICTION = 0.5;
 const physx::PxReal PhysicsSystem::DYNAMIC_FRICTION = 0.5;
 const physx::PxReal PhysicsSystem::RESTITUTION = 0.5;
+const float PhysicsSystem::DAMAGE_SQUARED_IMPULSE_THRESHOLD = 1.5f;
 
 PhysicsSystem::~PhysicsSystem() {
     m_pxMaterial->release();
@@ -85,6 +86,10 @@ bool PhysicsSystem::initialize() {
     return true;
 }
 
+void PhysicsSystem::setPlayerId(int id) {
+    m_playerId = id;
+}
+
 std::shared_ptr<RigidDynamicComponent> PhysicsSystem::getDynamicComponent(GameObject* gameObject) {
     for (auto& component: m_dynamicComponents) {
         if (component->getGameObject() == gameObject) {
@@ -139,7 +144,7 @@ void PhysicsSystem::update(float dt) {
     }
 }
 
-bool PhysicsSystem::isDynamic(physx::PxRigidActor* actor) {
+inline bool PhysicsSystem::isDynamic(physx::PxRigidActor* actor) {
     return actor->getType() == physx::PxActorType::eRIGID_DYNAMIC;
 }
 
@@ -148,17 +153,11 @@ void PhysicsSystem::reset() {
     m_staticComponents.clear();
 }
 
-// -----  PxSimulationEventCallback interface methods -----
-
-// called before actors moved(detected early on during the simulation)
+// PxSimulationEventCallback, called before actors moved(detected early on during the simulation)
 void PhysicsSystem::onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
-    static const physx::PxU32 bufferSize = 64;
-    physx::PxContactPairPoint contacts[bufferSize];
-
     for (physx::PxU32 i = 0; i < nbPairs; i++)
     {
         const physx::PxContactPair& contactPair = pairs[i];
-
         if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
         {
             auto actorA = pairHeader.actors[0];
@@ -168,26 +167,37 @@ void PhysicsSystem::onContact(const physx::PxContactPairHeader& pairHeader, cons
             if (isDynamic(actorA) && isDynamic(actorB)) {
                 gameObjectA = static_cast<GameObject*>(actorA->userData);
                 gameObjectB = static_cast<GameObject*>(actorB->userData);
-            }
-
-            if (gameObjectA != nullptr) {
-                auto numContacts = contactPair.extractContacts(contacts, bufferSize);
-                for (physx::PxU32 j = 0; j < numContacts; ++j) {
-                    auto contact = contacts[j];
-                    LOGD("+++ COLLISION IMPULSE = %f", contact.impulse.magnitude());
-                    auto point = contact.position;
-                    auto aPosition = gameObjectA->transform.p;
-                    auto bPosition = gameObjectB->transform.p;
-                    auto contactVec = point - aPosition;
-                    contactVec.normalize();
-                    break;
-                }
+                processContactPair(contactPair, gameObjectA, gameObjectB);
             }
         }
     }
 }
 
-void PhysicsSystem::onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) {
-    // TODO
-    // called from shapes that marked as triggers
+inline void PhysicsSystem::processContactPair(const physx::PxContactPair& contactPair,
+                                              GameObject* gameObjectA,
+                                              GameObject* gameObjectB) {
+    if (gameObjectA == nullptr || gameObjectB == nullptr) {
+        return;
+    }
+    GameObject* target = nullptr;
+    if (gameObjectA->getId() == m_playerId) {
+        target = gameObjectB;
+    }
+    else if (gameObjectB->getId() == m_playerId) {
+        target = gameObjectA;
+    }
+    else {
+        return;
+    }
+
+    static const physx::PxU32 bufferSize = 64;
+    physx::PxContactPairPoint contacts[bufferSize];
+    auto numContacts = contactPair.extractContacts(contacts, bufferSize);
+    for (physx::PxU32 j = 0; j < numContacts; ++j) {
+        auto impulse = contacts[j].impulse.magnitudeSquared();
+        if (impulse >= DAMAGE_SQUARED_IMPULSE_THRESHOLD) {
+            target->addDamage(static_cast<int>(std::sqrt(impulse)));
+        }
+        break;
+    }
 }

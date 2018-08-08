@@ -44,9 +44,8 @@ void Game::initLevel()
     for (auto i = 0; i < numBalls; ++i) {
         auto positionX = 0.0f;
         auto positionY = 3.0f + i;
-        auto positionZ = 0.0f;
-        auto health = 10;
-        auto ball = new GameObject(i, health);
+        auto positionZ = (i == 0) ? 3.0f : 0.0f;
+        auto ball = new GameObject(i, GlobalSettings::BASE_HP);
         ball->transform.p = physx::PxVec3(positionX, positionY, positionZ);
         ball->transform.q = physx::PxQuat(0.0f,0.0f, 0.0f, 1.0f);
         m_balls.emplace_back(ball);
@@ -64,7 +63,9 @@ void Game::initLevel()
     }
     auto firstBallComponent = m_physicsSystem.getDynamicComponent(m_balls.front());
     m_playerController.setPawn(firstBallComponent);
+    m_physicsSystem.setPlayerId(firstBallComponent->getGameObject()->getId());
     m_lastFreeId = m_level.initializeLevel(m_graphicsSystem, m_physicsSystem, numBalls);
+    m_numActiveBalls = numBalls;
 
     m_camera.setPosition(0.0f, 5.0f, 0.0f);
     m_camera.setUpVector(0.0f, 1.0f, 0.0f);
@@ -103,10 +104,18 @@ void Game::render() {
     const auto matrix = m_camera.getProjectionViewMatrix();
     m_graphicsSystem.render(matrix);
 
-    auto n = m_balls.size();
-    // TODO: remove dead objects
-    for (int i = 0; i < n; ++i) {
-        m_balls[i]->transformChanged = false;
+    for (int i = 0; i < m_numActiveBalls; ++i) {
+        auto ball = m_balls[i];
+        ball->transformChanged = false;
+        if (ball->getHealth() == 0) {
+            m_graphicsSystem.removeEntity(ball);
+            m_physicsSystem.removeDynamicEntity(ball);
+            ball->reset();
+
+            std::swap(m_balls[i], m_balls[m_numActiveBalls - 1]);
+            --i;
+            --m_numActiveBalls;
+        }
     }
 }
 
@@ -116,6 +125,10 @@ void Game::onResize() {
     m_screenHeight = GlobalSettings::DEFAULT_SCREEN_HEIGHT;
     m_screenWidth = m_screenHeight * m_surfaceWidth / m_surfaceHeight;
     inputTouchLayer.updateScreenSize(m_screenWidth, m_screenHeight, m_screenHeight / (float)m_surfaceHeight);
+}
+
+int Game::onInputEvent(AInputEvent* event) {
+    return inputTouchLayer.processInputEvent(event) ? 1 : 0;
 }
 
 void Game::onPause() {

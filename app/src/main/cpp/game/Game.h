@@ -18,8 +18,9 @@ public:
     virtual ~Game();
     virtual void update(float dt) override;
     virtual void render() override;
-
+    virtual int onInputEvent(AInputEvent* event) override;
 protected:
+
     virtual void onPause() override;
     virtual void onResume() override;
     virtual void startGraphics() override;
@@ -31,10 +32,12 @@ private:
     int m_screenWidth = 0;
     int m_screenHeight = 0;
     int m_lastFreeId = 0;
+    int m_numActiveBalls = 0;
 
     Level m_level;
     Camera m_camera;
 
+    TouchLayer inputTouchLayer;
     PlayerController m_playerController;
     GraphicsSystem m_graphicsSystem;
     PhysicsSystem m_physicsSystem;

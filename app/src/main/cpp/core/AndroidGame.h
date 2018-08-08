@@ -10,9 +10,7 @@ extern "C" {
     void android_main(struct android_app* state);
 };
 
-#include <time.h>
 #include "common.h"
-#include "../game/systems/input/TouchLayer.h"
 #include "stdlib.h"
 
 struct AndroidGameSavedState {
@@ -22,9 +20,6 @@ struct AndroidGameSavedState {
 
 class AndroidGame {
 public:
-    // core systems
-    TouchLayer inputTouchLayer;
-
     AndroidGame(struct android_app *app);
     virtual ~AndroidGame();
 
@@ -35,6 +30,7 @@ public:
     virtual void render();
 
     void handleCommand(int32_t cmd);
+    virtual int onInputEvent(AInputEvent* event) = 0;
 
 protected:
     struct android_app* m_app;
@@ -47,7 +43,7 @@ protected:
     virtual void startGraphics() = 0;
     virtual void killGraphics() = 0;
 private:
-    static const float MAX_DELTA_TIME;
+    static const float SIMULATION_TIME;
     struct AndroidGameSavedState m_state;
 
     bool m_hasFocus;
@@ -61,7 +57,7 @@ private:
     EGLContext m_eglContext;
     EGLConfig m_eglConfig;
 
-    float m_lastTime;
+    double m_lastUpdateTime;
 
     bool initDisplay();
     bool initSurface();
@@ -75,7 +71,7 @@ private:
 
     bool preRender();
     void postRender();
-    float getCurrentTime();
+    double getCurrentTime();
 };
 
 

@@ -16,6 +16,7 @@ public:
     int getId() const;
     int getHealth() const;
     void addDamage(int value);
+    void reset();
 private:
     int m_id = -1;
     int m_health = 0;

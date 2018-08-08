@@ -7,6 +7,7 @@ class GlobalSettings {
 public:
     static const int DEFAULT_SCREEN_WIDTH = 1920;
     static const int DEFAULT_SCREEN_HEIGHT = 1080;
+    static const int BASE_HP = 5;
     static const float NEAR_CLIPPING;
     static const float FAR_CLIPPING;
     static const float FIELD_OF_VIEW;

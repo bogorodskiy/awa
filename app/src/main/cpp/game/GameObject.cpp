@@ -24,3 +24,8 @@ int GameObject::getHealth() const {
 void GameObject::addDamage(int value) {
     m_health = std::max(0, m_health - value);
 }
+
+void GameObject::reset() {
+    m_id = -1;
+    m_health = 0;
+}

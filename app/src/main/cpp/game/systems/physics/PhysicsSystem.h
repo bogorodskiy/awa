@@ -15,21 +15,25 @@ public:
     static const physx::PxReal STATIC_FRICTION;
     static const physx::PxReal DYNAMIC_FRICTION;
     static const physx::PxReal RESTITUTION;
+    static const float DAMAGE_SQUARED_IMPULSE_THRESHOLD;
 
     ~PhysicsSystem();
     bool initialize();
+    void setPlayerId(int id);
 
     std::shared_ptr<RigidDynamicComponent> getDynamicComponent(GameObject* gameObject);
     void addDynamicEntity(GameObject* gameObject,
                           float radius);
-    void addStaticEntity(GameObject* gameObject);
     void removeDynamicEntity(GameObject* gameObject);
+
+    void addStaticEntity(GameObject* gameObject);
     void removeStaticEntity(GameObject* gameObject);
+
     void update(float dt);
 
     // PxSimulationEventCallback
     virtual void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) override;
-    virtual void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) override;
+    virtual void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) override {};
     virtual void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) override {};
     virtual void onWake(physx::PxActor** actors, physx::PxU32 count) override {};
     virtual void onSleep(physx::PxActor** actors, physx::PxU32 count) override {};
@@ -42,6 +46,7 @@ public:
 private:
     int m_numDynamicComponents = 0;
     int m_numStaticComponents = 0;
+    int m_playerId = -1;
     physx::PxFoundation* m_pxFoundation;
     physx::PxPhysics* m_pxPhysics;
     physx::PxScene* m_pxScene;
@@ -74,6 +79,9 @@ private:
         }
         --numComponents;
     }
+    void processContactPair(const physx::PxContactPair& contactPair,
+                            GameObject* gameObjectA,
+                            GameObject* gameObjectB);
 };
 
 

@@ -10,13 +10,16 @@ void GraphicsComponent::fillWith(GameObject* gameObject,
                                  Geometry::Type geometryType,
                                  physx::PxVec3 size,
                                  physx::PxVec4 color) {
-    m_gameObject = gameObject;
     geometry = createGeometry(geometryType, size);
     this->color = color;
+    m_gameObject = gameObject;
+    m_modelMatrix = physx::PxMat44(m_gameObject->transform);
 }
 
 void GraphicsComponent::fillWith(const GraphicsComponent& source) {
     geometry = source.geometry;
+    color = source.color;
+    m_modelMatrix = source.m_modelMatrix;
     m_gameObject = source.m_gameObject;
 }
 

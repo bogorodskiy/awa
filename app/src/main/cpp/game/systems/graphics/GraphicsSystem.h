@@ -27,7 +27,6 @@ public:
     void reset();
 private:
     int m_numComponents = 0;
-    Geometry::Type m_lastGeometryType = Geometry::Type::NONE;
     Level* m_level = nullptr;
     Camera* m_camera = nullptr;
     std::vector<std::shared_ptr<GraphicsComponent>> m_components;
