@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <exception>
 #include "Game.h"
 #include "GlobalSettings.h"
 #include "geometry/GeometryFactory.h"
@@ -14,7 +15,7 @@ Game::Game(struct android_app *app) :
     auto physicsInitialized = m_physicsSystem.initialize();
     if (!physicsInitialized)
     {
-        // TODO: abort game
+        std::terminate();
     }
     initLevel();
 }
@@ -67,14 +68,13 @@ void Game::initLevel()
     m_lastFreeId = m_level.initializeLevel(m_graphicsSystem, m_physicsSystem, numBalls);
     m_numActiveBalls = numBalls;
 
-    m_camera.setPosition(0.0f, 5.0f, 0.0f);
-    m_camera.setUpVector(0.0f, 1.0f, 0.0f);
-    m_camera.setDirection(0.0f, -1.0f, -20.0f);
     m_camera.setTarget(m_balls.front());
-    auto roomBounds = m_level.getBounds();
-    m_camera.setRoomBounds(-roomBounds.x * 0.5f, roomBounds.x * 0.5f,
-                           -roomBounds.y * 0.5f, roomBounds.y * 0.5f,
-                           -roomBounds.z * 0.5f, roomBounds.z * 0.5f);
+    m_camera.update();
+
+    auto levelBounds = m_level.getBounds();
+    m_camera.setLevelBounds(-levelBounds.x * 0.5f, levelBounds.x * 0.5f,
+                            -levelBounds.y * 0.5f, levelBounds.y * 0.5f,
+                            -levelBounds.z * 0.5f, levelBounds.z * 0.5f);
 }
 
 void Game::startGraphics() {
@@ -82,7 +82,7 @@ void Game::startGraphics() {
     if (!graphicsStarted)
     {
         LOGE("startGraphics ERROR");
-        // TODO: abort game
+        std::terminate();
     }
     GeometryFactory::getInstance()->connect();
 }
@@ -95,13 +95,13 @@ void Game::killGraphics() {
 void Game::update(float dt) {
     m_playerController.update();
     m_physicsSystem.update(dt);
-    m_camera.update(dt);
+    m_camera.update();
 }
 
 void Game::render() {
     AndroidGame::render();
 
-    const auto matrix = m_camera.getProjectionViewMatrix();
+    const auto& matrix = m_camera.getProjectionViewMatrix();
     m_graphicsSystem.render(matrix);
 
     for (int i = 0; i < m_numActiveBalls; ++i) {

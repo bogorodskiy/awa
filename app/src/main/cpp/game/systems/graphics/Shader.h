@@ -14,7 +14,6 @@ class Shader {
 public:
     static const int MAX_POINT_LIGHTS = 4;
 
-    Shader();
     ~Shader();
 
     bool compile(const char* vertexShader, const char* fragmentShader);
@@ -32,21 +31,21 @@ public:
     void endRender();
     void reset();
 private:
-    bool m_initSuccessful;
-    GLuint m_vertexShaderId;
-    GLuint m_fragmentShaderId;
-    GLuint m_programId;
-    GLint m_positionLocation;
-    GLint m_normalLocation;
-    GLint m_mvpMatrixLocation;
-    GLint m_worldMatrixLocation;
-    GLint m_colorLocation;
-    GLint m_eyeWorldPositionLocation;
-    GLint m_matSpecularIntensityLocation;
-    GLint m_matSpecularPowerLocation;
-    GLint m_numPointLightsLocation;
+    bool m_initSuccessful = false;
+    GLuint m_vertexShaderId = 0;
+    GLuint m_fragmentShaderId = 0;
+    GLuint m_programId = 0;
+    GLint m_positionLocation = -1;
+    GLint m_normalLocation = -1;
+    GLint m_mvpMatrixLocation = -1;
+    GLint m_worldMatrixLocation = -1;
+    GLint m_colorLocation = -1;
+    GLint m_eyeWorldPositionLocation = -1;
+    GLint m_matSpecularIntensityLocation = -1;
+    GLint m_matSpecularPowerLocation = -1;
+    GLint m_numPointLightsLocation = -1;
 
-    Geometry* m_renderTarget;
+    Geometry* m_renderTarget = nullptr;
 
     struct {
         GLint ambientIntensity;

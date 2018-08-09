@@ -78,5 +78,4 @@ void main() {
         result += calcPointLight(i, normal);
     }
     fragColor = u_color * result;
-    //fragColor = result;
 }

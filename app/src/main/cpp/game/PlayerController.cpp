@@ -3,8 +3,7 @@
 #include "GlobalSettings.h"
 
 PlayerController::PlayerController() : m_moveHandler(TouchInputHandler::TouchInputType::STICK, 0),
-                                       m_cameraHandler(TouchInputHandler::TouchInputType::STICK, 1),
-                                       m_actionHandler(TouchInputHandler::TouchInputType::BUTTON, 2) {
+                                       m_cameraHandler(TouchInputHandler::TouchInputType::STICK, 1) {
 
 }
 
@@ -19,7 +18,6 @@ void PlayerController::initialize(TouchLayer *touchLayer, Camera *camera) {
     m_touchLayer->addTouchHandler(&m_moveHandler);
     m_cameraHandler.updateBounds(inputAreaWidth, inputAreaHeight, ScreenBounds::AlignHorizontal::RIGHT, ScreenBounds::AlignVertical::TOP);
     m_touchLayer->addTouchHandler(&m_cameraHandler);
-    // TODO: init action layer
 }
 
 void PlayerController::setPawn(std::shared_ptr<RigidDynamicComponent> pawn) {
@@ -47,6 +45,7 @@ void PlayerController::update() {
     if (m_cameraHandler.getActive()) {
         auto amplifier = 0.4f;
         auto deltaX = -m_cameraHandler.getMoveDeltaX() * amplifier;
-        m_camera->rotateH(deltaX);
+        auto deltaY = -m_cameraHandler.getMoveDeltaY() * amplifier;
+        m_camera->rotate(deltaY, deltaX);
     }
 }

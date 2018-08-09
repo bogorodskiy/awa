@@ -93,9 +93,9 @@ void GraphicsSystem::removeEntity(GameObject* gameObject) {
 void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
     m_shader.bind();
     m_shader.setPointLights(m_level->getPointLights());
-    auto position = m_camera->getPosition();
+    const auto& position = m_camera->getPosition();
     m_shader.setEyeWorldPosition(position.x, position.y, position.z);
-    auto lastGeometryType = Geometry::Type::NONE;
+    Geometry* lastGeometry = nullptr;
 
     for (auto i = 0; i < m_numComponents; ++i) {
         auto& component = m_components[i];
@@ -104,8 +104,8 @@ void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
         const auto& modelMatrix = component->getModelMatrix();
         auto mvpMatrix = viewProjectionMatrix * modelMatrix;
 
-        if (lastGeometryType != component->geometry->getType()) {
-            lastGeometryType = component->geometry->getType();
+        if (lastGeometry != component->geometry) {
+            lastGeometry = component->geometry;
 
             m_shader.endRender();
             m_shader.beginRender(component->geometry);

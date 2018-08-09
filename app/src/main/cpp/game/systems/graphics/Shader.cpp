@@ -1,24 +1,5 @@
 #include "Shader.h"
 
-// TODO: init in header
-Shader::Shader():
-        m_initSuccessful(false),
-        m_vertexShaderId(0),
-        m_fragmentShaderId(0),
-        m_programId(0),
-        m_positionLocation(-1),
-        m_normalLocation(-1),
-        m_mvpMatrixLocation(-1),
-        m_worldMatrixLocation(-1),
-        m_colorLocation(-1),
-        m_eyeWorldPositionLocation(-1),
-        m_matSpecularIntensityLocation(-1),
-        m_matSpecularPowerLocation(-1),
-        m_numPointLightsLocation(-1),
-        m_renderTarget(nullptr) {
-
-}
-
 Shader::~Shader() {
     reset();
 }

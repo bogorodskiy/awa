@@ -10,7 +10,7 @@ GeometryFactory::~GeometryFactory() {
     for (const auto& pair : m_geometries) {
         delete pair.second;
     }
-    for (const auto& geometry: m_uniqueGeometries) {
+    for (auto geometry: m_uniqueGeometries) {
         delete geometry;
     }
     m_geometries.clear();

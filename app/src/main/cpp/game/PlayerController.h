@@ -22,7 +22,6 @@ private:
 
     TouchInputHandler m_moveHandler;
     TouchInputHandler m_cameraHandler;
-    TouchInputHandler m_actionHandler;
 };
 
 
