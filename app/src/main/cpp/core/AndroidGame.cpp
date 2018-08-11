@@ -51,11 +51,9 @@ void AndroidGame::startGameLoop() {
     auto accumulator = 0.0;
 
     while (true) {
+        struct android_poll_source* source;
         int result;
         int events;
-
-        struct android_poll_source* source;
-
         while ( (result = ALooper_pollAll(getIsAnimating() ? 0 : -1, NULL, &events, (void**)&source)) > 0 ) {
             if (source != NULL) {
                 source->process(m_app, source);
@@ -66,17 +64,15 @@ void AndroidGame::startGameLoop() {
             }
         }
 
-        using namespace std::chrono;
-
         if (getIsAnimating()) {
             auto currentTime = getCurrentTime();
-            auto deltaTime = currentTime - m_lastUpdateTime;
+            auto frameTime = currentTime - m_lastUpdateTime;
             m_lastUpdateTime = currentTime;
 
-            accumulator += deltaTime;
+            accumulator += frameTime;
             while (accumulator >= SIMULATION_TIME) {
-                update(static_cast<float>(deltaTime));
-                accumulator -= deltaTime;
+                update(SIMULATION_TIME);
+                accumulator -= SIMULATION_TIME;
             }
 
             if (preRender()) {

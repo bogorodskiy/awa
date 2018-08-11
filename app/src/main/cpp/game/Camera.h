@@ -16,15 +16,11 @@ public:
 
     void setAspectRatio(float value);
     void setTarget(GameObject* target);
-    void setLevelBounds(float minX, float maxX,
-                        float minY, float maxY,
-                        float minZ, float maxZ);
 
     void rotate(float pitch, float yaw);
     void update();
 private:
-    static const float H_DISTANCE_FROM_TARGET;
-    static const float V_DISTANCE_FROM_TARGET;
+    static const float DISTANCE_FROM_TARGET;
     static const float DEGREES_TO_RADIANS;
 
     bool m_rotationChanged = false;
@@ -36,7 +32,6 @@ private:
     physx::PxVec3 m_direction;
     physx::PxVec3 m_upVector;
     physx::PxVec3 m_lastActorPosition;
-    float m_levelBounds[6];
     physx::PxMat44 m_projectionMatrix;
     physx::PxMat44 m_projectionViewMatrix;
 

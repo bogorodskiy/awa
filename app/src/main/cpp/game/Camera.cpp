@@ -5,8 +5,7 @@
 #include "GlobalSettings.h"
 #include "../core/common.h"
 
-const float Camera::H_DISTANCE_FROM_TARGET = 5.0f;
-const float Camera::V_DISTANCE_FROM_TARGET = 3.0f;
+const float Camera::DISTANCE_FROM_TARGET = 5.0f;
 const float Camera::DEGREES_TO_RADIANS = 0.01745329251994329576923690768489f;
 
 Camera::Camera():
@@ -17,6 +16,9 @@ Camera::Camera():
     m_upVector(0.0f, 0.0f, 0.0f),
     m_lastActorPosition(0.0f, 0.0f, 0.0f)
 {
+    m_upVector.x = 0.0f;
+    m_upVector.y = 1.0f;
+    m_upVector.z = 0.0f;
 }
 
 const physx::PxVec3& Camera::getPosition() const{
@@ -29,17 +31,6 @@ const physx::PxVec3& Camera::getDirection() const{
 
 const physx::PxVec3& Camera::getUpVector() const{
     return m_upVector;
-}
-
-void Camera::setLevelBounds(float minX, float maxX,
-                            float minY, float maxY,
-                            float minZ, float maxZ) {
-    m_levelBounds[0] = minX;
-    m_levelBounds[1] = maxX;
-    m_levelBounds[2] = minY;
-    m_levelBounds[3] = maxY;
-    m_levelBounds[4] = minZ;
-    m_levelBounds[5] = maxZ;
 }
 
 const physx::PxMat44& Camera::getProjectionViewMatrix() const {
@@ -70,11 +61,11 @@ void Camera::rotate(float pitch, float yaw) {
     m_yawRotation += yaw;
 
     // limit rotations
-    if (m_pitchRotation > 0) {
-        m_pitchRotation = 0;
+    if (m_pitchRotation > 60) {
+        m_pitchRotation = 60;
     }
-    if (m_pitchRotation < -89) {
-        m_pitchRotation = -89;
+    if (m_pitchRotation < -30) {
+        m_pitchRotation = -30;
     }
     while (m_yawRotation < -180) {
         m_yawRotation += 360;
@@ -97,24 +88,21 @@ void Camera::update() {
 
     const auto pitchRadians = m_pitchRotation * DEGREES_TO_RADIANS;
     const auto yawRadians = m_yawRotation * DEGREES_TO_RADIANS;
-    auto cX = std::sin(yawRadians) * H_DISTANCE_FROM_TARGET;
-    auto cY = -std::sin(pitchRadians) * V_DISTANCE_FROM_TARGET;
-    auto cZ = std::cos(yawRadians) * H_DISTANCE_FROM_TARGET;
+
+    const auto cX = -std::cos(yawRadians) * std::cos(pitchRadians) * DISTANCE_FROM_TARGET;
+    const auto cY = std::sin(pitchRadians) * DISTANCE_FROM_TARGET;
+    const auto cZ = std::sin(yawRadians) * std::cos(pitchRadians) * DISTANCE_FROM_TARGET;
 
     m_position = m_target->transform.p + physx::PxVec3(cX, cY, cZ) ;
 
-    m_direction = actorPosition;
-
-    m_upVector.x = 0.0f;
-    m_upVector.y = 1.0f;
-    m_upVector.z = 0.0f;
+    m_direction = actorPosition - m_position;
+    m_direction.normalizeFast();
 }
 
 void Camera::updateProjectionViewMatrix() {
     // look at implementation
-    auto f = (m_direction - m_position).getNormalized();
-    auto s = f.cross(m_upVector).getNormalized();
-    auto u = s.cross(f);
+    auto s = m_direction.cross(m_upVector).getNormalized();
+    auto u = s.cross(m_direction);
     auto viewMatrix = physx::PxMat44{1.0f};
     viewMatrix[0][0] = s.x;
     viewMatrix[1][0] = s.y;
@@ -122,12 +110,12 @@ void Camera::updateProjectionViewMatrix() {
     viewMatrix[0][1] = u.x;
     viewMatrix[1][1] = u.y;
     viewMatrix[2][1] = u.z;
-    viewMatrix[0][2] = -f.x;
-    viewMatrix[1][2] = -f.y;
-    viewMatrix[2][2] = -f.z;
+    viewMatrix[0][2] = -m_direction.x;
+    viewMatrix[1][2] = -m_direction.y;
+    viewMatrix[2][2] = -m_direction.z;
     viewMatrix[3][0] = -s.dot(m_position);
     viewMatrix[3][1] = -u.dot(m_position);
-    viewMatrix[3][2] =  f.dot(m_position);
+    viewMatrix[3][2] =  m_direction.dot(m_position);
 
     m_projectionViewMatrix = m_projectionMatrix * viewMatrix;
 }

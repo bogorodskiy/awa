@@ -70,11 +70,6 @@ void Game::initLevel()
 
     m_camera.setTarget(m_balls.front());
     m_camera.update();
-
-    auto levelBounds = m_level.getBounds();
-    m_camera.setLevelBounds(-levelBounds.x * 0.5f, levelBounds.x * 0.5f,
-                            -levelBounds.y * 0.5f, levelBounds.y * 0.5f,
-                            -levelBounds.z * 0.5f, levelBounds.z * 0.5f);
 }
 
 void Game::startGraphics() {

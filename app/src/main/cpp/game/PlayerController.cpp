@@ -30,16 +30,17 @@ void PlayerController::update() {
     }
 
     if (m_moveHandler.getActive()) {
-        auto forceYDirection = m_camera->getDirection() - m_camera->getPosition();
-        forceYDirection.normalize();
+        auto forceYDirection = m_camera->getDirection();
         auto forceXDirection = forceYDirection.cross(m_camera->getUpVector());
         forceXDirection.normalize();
 
         static const auto amplifier = 5.0f;
-        physx::PxVec3 forceY = forceYDirection * m_moveHandler.getDirectionY() * amplifier;
-        physx::PxVec3 forceX = forceXDirection * m_moveHandler.getDirectionX() * amplifier;
+        physx::PxVec3 forceY = forceYDirection * m_moveHandler.getDirectionY();
+        physx::PxVec3 forceX = forceXDirection * m_moveHandler.getDirectionX();
         auto force = forceX + forceY;
         force.y = 0.0f;
+        force.normalize();
+        force *= amplifier;
         m_pawn->addForce(force);
     }
     if (m_cameraHandler.getActive()) {
