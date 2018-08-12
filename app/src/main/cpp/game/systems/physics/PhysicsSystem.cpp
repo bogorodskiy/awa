@@ -146,6 +146,9 @@ inline bool PhysicsSystem::isDynamic(physx::PxRigidActor* actor) {
 }
 
 void PhysicsSystem::reset() {
+    m_numDynamicComponents = 0;
+    m_numStaticComponents = 0;
+    m_playerId = -1;
     m_dynamicComponents.clear();
     m_staticComponents.clear();
 }

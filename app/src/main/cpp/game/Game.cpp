@@ -91,17 +91,9 @@ void Game::update(float dt) {
     m_playerController.update();
     m_physicsSystem.update(dt);
     m_camera.update();
-}
-
-void Game::render() {
-    AndroidGame::render();
-
-    const auto& matrix = m_camera.getProjectionViewMatrix();
-    m_graphicsSystem.render(matrix);
 
     for (int i = 0; i < m_numActiveBalls; ++i) {
         auto ball = m_balls[i];
-        ball->transformChanged = false;
         if (ball->getHealth() == 0) {
             m_graphicsSystem.removeEntity(ball);
             m_physicsSystem.removeDynamicEntity(ball);
@@ -111,6 +103,17 @@ void Game::render() {
             --i;
             --m_numActiveBalls;
         }
+    }
+}
+
+void Game::render() {
+    AndroidGame::render();
+
+    const auto& matrix = m_camera.getProjectionViewMatrix();
+    m_graphicsSystem.render(matrix);
+
+    for (int i = 0; i < m_numActiveBalls; ++i) {
+        m_balls[i]->transformChanged = false;
     }
 }
 

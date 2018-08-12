@@ -119,5 +119,6 @@ void GraphicsSystem::render(const physx::PxMat44& viewProjectionMatrix) {
 }
 
 void GraphicsSystem::reset() {
+    m_numComponents = 0;
     m_components.clear();
 }
