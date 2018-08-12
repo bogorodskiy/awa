@@ -29,7 +29,7 @@ private:
     int m_numComponents = 0;
     Level* m_level = nullptr;
     Camera* m_camera = nullptr;
-    std::vector<std::shared_ptr<GraphicsComponent>> m_components;
+    std::vector<std::unique_ptr<GraphicsComponent>> m_components;
     Shader m_shader;
 };
 

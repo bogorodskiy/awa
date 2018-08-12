@@ -53,10 +53,10 @@ private:
     physx::PxMaterial* m_pxMaterial;
 
     std::vector<std::shared_ptr<RigidDynamicComponent>> m_dynamicComponents;
-    std::vector<std::shared_ptr<RigidStaticComponent>> m_staticComponents;
+    std::vector<std::unique_ptr<RigidStaticComponent>> m_staticComponents;
 
     template<typename T>
-    void removeEntity(std::vector<std::shared_ptr<T>>& container, int& numComponents, GameObject* gameObject) {
+    void removeEntity(std::vector<T>& container, int& numComponents, GameObject* gameObject) {
         auto position = 0u;
         for (; position < numComponents; ++position)
         {

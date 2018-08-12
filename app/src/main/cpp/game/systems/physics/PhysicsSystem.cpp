@@ -4,7 +4,6 @@
 #include "../../GlobalSettings.h"
 
 // PHYSX CONTACT FILTER
-
 physx::PxFilterFlags GameContactReportFilterShader(
         physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
         physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
@@ -12,8 +11,6 @@ physx::PxFilterFlags GameContactReportFilterShader(
 {
     pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT
                 | physx::PxPairFlag::eNOTIFY_TOUCH_FOUND
-                //| physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS
-                | physx::PxPairFlag::eNOTIFY_TOUCH_LOST
                 | physx::PxPairFlag::eNOTIFY_CONTACT_POINTS;
 
     return physx::PxFilterFlag::eDEFAULT;
@@ -114,7 +111,7 @@ void PhysicsSystem::addDynamicEntity(GameObject* gameObject,
 
 void PhysicsSystem::addStaticEntity(GameObject* gameObject) {
     if (m_numStaticComponents == m_staticComponents.size()) {
-        m_staticComponents.emplace_back(std::make_shared<RigidStaticComponent>());
+        m_staticComponents.emplace_back(std::make_unique<RigidStaticComponent>());
     }
     m_staticComponents[m_numStaticComponents]->fillWith(m_pxPhysics,
                                                         m_pxScene,
@@ -125,11 +122,11 @@ void PhysicsSystem::addStaticEntity(GameObject* gameObject) {
 }
 
 void PhysicsSystem::removeDynamicEntity(GameObject* gameObject) {
-    removeEntity<RigidDynamicComponent>(m_dynamicComponents, m_numDynamicComponents, gameObject);
+    removeEntity<std::shared_ptr<RigidDynamicComponent>>(m_dynamicComponents, m_numDynamicComponents, gameObject);
 }
 
 void PhysicsSystem::removeStaticEntity(GameObject* gameObject) {
-    removeEntity<RigidStaticComponent>(m_staticComponents, m_numStaticComponents, gameObject);
+    removeEntity<std::unique_ptr<RigidStaticComponent>>(m_staticComponents, m_numStaticComponents, gameObject);
 }
 
 void PhysicsSystem::update(float dt) {

@@ -18,7 +18,6 @@ bool GraphicsSystem::startGraphics()
     glCullFace(GL_BACK);
 
     auto& resourceManager = ResourceManager::getInstance();
-
     char* vertexShader = resourceManager.readAsset(GlobalSettings::VERTEX_SHADER_PATH);
     char* fragmentShader = resourceManager.readAsset(GlobalSettings::FRAGMENT_SHADER_PATH);
 
@@ -59,7 +58,7 @@ void GraphicsSystem::addEntity(GameObject* gameObject,
                                physx::PxVec3 size,
                                physx::PxVec4 color) {
     if (m_numComponents == m_components.size()) {
-        m_components.emplace_back(std::make_shared<GraphicsComponent>());
+        m_components.emplace_back(std::make_unique<GraphicsComponent>());
     }
     m_components[m_numComponents]->fillWith(gameObject, geometryType, size, color);
     ++m_numComponents;
@@ -76,7 +75,7 @@ void GraphicsSystem::removeEntity(GameObject* gameObject) {
     }
     if (position == m_numComponents)
     {
-        LOGE("+++ Unable to find gameObject with id %i in GraphicsSystem components", gameObject->getId());
+        LOGE("Unable to find gameObject with id %i in GraphicsSystem components", gameObject->getId());
         return;
     }
 
