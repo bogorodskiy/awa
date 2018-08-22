@@ -37,6 +37,7 @@ protected:
     int m_surfaceWidth;
     int m_surfaceHeight;
 
+    double getCurrentTime();
     virtual void onResize();
     virtual void onPause() = 0;
     virtual void onResume() = 0;
@@ -71,7 +72,6 @@ private:
 
     bool preRender();
     void postRender();
-    double getCurrentTime();
 };
 
 

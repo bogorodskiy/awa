@@ -20,13 +20,14 @@ public:
     virtual void render() override;
     virtual int onInputEvent(AInputEvent* event) override;
 protected:
-
     virtual void onPause() override;
     virtual void onResume() override;
     virtual void startGraphics() override;
     virtual void killGraphics() override;
     virtual void onResize() override;
 private:
+    static const float BALL_RADIUS;
+
     bool m_initialized = false;
     std::vector<GameObject*> m_balls;
     int m_screenWidth = 0;

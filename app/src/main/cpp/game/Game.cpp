@@ -5,6 +5,8 @@
 #include "geometry/GeometryFactory.h"
 #include "../core/resource/ResourceManager.h"
 
+const float Game::BALL_RADIUS = 0.5f;
+
 Game::Game(struct android_app *app) :
         AndroidGame(app),
         m_initialized(false)
@@ -12,7 +14,7 @@ Game::Game(struct android_app *app) :
     m_screenWidth = GlobalSettings::DEFAULT_SCREEN_WIDTH;
     m_screenHeight = GlobalSettings::DEFAULT_SCREEN_WIDTH;
 
-    auto physicsInitialized = m_physicsSystem.initialize();
+    auto physicsInitialized = m_physicsSystem.initialize(BALL_RADIUS);
     if (!physicsInitialized)
     {
         std::terminate();
@@ -40,7 +42,7 @@ void Game::initLevel()
     m_graphicsSystem.initialize(&m_camera, &m_level);
 
     // spawn balls in the center of the level
-    const auto numBalls = 11;
+    const auto numBalls = 100;
     const auto ballSize = physx::PxVec3(0.5f, 0.5f, 0.5f);
     for (auto i = 0; i < numBalls; ++i) {
         auto positionX = 0.0f;
@@ -48,7 +50,7 @@ void Game::initLevel()
         auto positionZ = (i == 0) ? 3.0f : 0.0f;
         auto ball = new GameObject(i, GlobalSettings::BASE_HP);
         ball->transform.p = physx::PxVec3(positionX, positionY, positionZ);
-        ball->transform.q = physx::PxQuat(0.0f,0.0f, 0.0f, 1.0f);
+        ball->transform.q = physx::PxQuat(0.0f, 0.0f, 0.0f, 1.0f);
         m_balls.emplace_back(ball);
 
         auto randomDelta = (1 + std::rand() % 5) / 10.0f;
@@ -59,8 +61,7 @@ void Game::initLevel()
                                    Geometry::Type::SPHERE,
                                    ballSize,
                                    randomColor);
-        m_physicsSystem.addDynamicEntity(ball,
-                                         ballSize.x);
+        m_physicsSystem.addDynamicEntity(ball);
     }
     auto firstBallComponent = m_physicsSystem.getDynamicComponent(m_balls.front());
     m_playerController.setPawn(firstBallComponent);

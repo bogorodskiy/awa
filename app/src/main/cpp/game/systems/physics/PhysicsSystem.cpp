@@ -23,6 +23,7 @@ const float PhysicsSystem::DAMAGE_SQUARED_IMPULSE_THRESHOLD = 1.5f;
 
 PhysicsSystem::~PhysicsSystem() {
     m_pxMaterial->release();
+    m_pxSphereShape->release();
     m_pxPhysics->release();
     m_pxPhysics = nullptr;
 
@@ -30,7 +31,7 @@ PhysicsSystem::~PhysicsSystem() {
     m_pxFoundation = nullptr;
 }
 
-bool PhysicsSystem::initialize() {
+bool PhysicsSystem::initialize(float dynamicEntityRadius) {
     static physx::PxDefaultErrorCallback gDefaultErrorCallback;
     static physx::PxDefaultAllocator gDefaultAllocatorCallback;
     static physx::PxSimulationFilterShader gDefaultFilterShader = physx::PxDefaultSimulationFilterShader;
@@ -80,6 +81,7 @@ bool PhysicsSystem::initialize() {
     m_pxScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0);
 
     m_pxMaterial = m_pxPhysics->createMaterial(STATIC_FRICTION, DYNAMIC_FRICTION, RESTITUTION);
+    m_pxSphereShape = m_pxPhysics->createShape(physx::PxSphereGeometry(dynamicEntityRadius), *m_pxMaterial);
     return true;
 }
 
@@ -96,15 +98,13 @@ std::shared_ptr<RigidDynamicComponent> PhysicsSystem::getDynamicComponent(GameOb
     return nullptr;
 }
 
-void PhysicsSystem::addDynamicEntity(GameObject* gameObject,
-                                     float radius) {
+void PhysicsSystem::addDynamicEntity(GameObject* gameObject) {
     if (m_numDynamicComponents == m_dynamicComponents.size()) {
         m_dynamicComponents.emplace_back(std::make_shared<RigidDynamicComponent>());
     }
     m_dynamicComponents[m_numDynamicComponents]->fillWith(m_pxPhysics,
                                                           m_pxScene,
-                                                          m_pxMaterial,
-                                                          physx::PxSphereGeometry(radius),
+                                                          m_pxSphereShape,
                                                           gameObject);
     ++m_numDynamicComponents;
 }

@@ -7,15 +7,13 @@
 
 class RigidDynamicComponent: public GameObjectComponent {
 public:
-    static const physx::PxU32 NUM_SHAPES;
     static const physx::PxReal DENSITY;
     static const physx::PxReal ANGULAR_DAMPING;
     static const physx::PxReal LINEAR_DAMPING;
 
     void fillWith(physx::PxPhysics* pxPhysics,
                   physx::PxScene* pxScene,
-                  physx::PxMaterial* material,
-                  physx::PxSphereGeometry geometry,
+                  physx::PxShape* shape,
                   GameObject* gameObject);
     void fillWith(const RigidDynamicComponent& source);
     void reset(bool finalize);

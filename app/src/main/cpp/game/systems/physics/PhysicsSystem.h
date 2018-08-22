@@ -18,12 +18,11 @@ public:
     static const float DAMAGE_SQUARED_IMPULSE_THRESHOLD;
 
     ~PhysicsSystem();
-    bool initialize();
+    bool initialize(float dynamicEntityRadius);
     void setPlayerId(int id);
 
     std::shared_ptr<RigidDynamicComponent> getDynamicComponent(GameObject* gameObject);
-    void addDynamicEntity(GameObject* gameObject,
-                          float radius);
+    void addDynamicEntity(GameObject* gameObject);
     void removeDynamicEntity(GameObject* gameObject);
 
     void addStaticEntity(GameObject* gameObject);
@@ -47,10 +46,11 @@ private:
     int m_numDynamicComponents = 0;
     int m_numStaticComponents = 0;
     int m_playerId = -1;
-    physx::PxFoundation* m_pxFoundation;
-    physx::PxPhysics* m_pxPhysics;
-    physx::PxScene* m_pxScene;
-    physx::PxMaterial* m_pxMaterial;
+    physx::PxFoundation* m_pxFoundation = nullptr;
+    physx::PxPhysics* m_pxPhysics = nullptr;
+    physx::PxScene* m_pxScene = nullptr;
+    physx::PxMaterial* m_pxMaterial = nullptr;
+    physx::PxShape* m_pxSphereShape = nullptr;
 
     std::vector<std::shared_ptr<RigidDynamicComponent>> m_dynamicComponents;
     std::vector<std::unique_ptr<RigidStaticComponent>> m_staticComponents;

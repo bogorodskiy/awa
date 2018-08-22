@@ -1,8 +1,6 @@
 #include "RigidDynamicComponent.h"
 #include "PxPhysicsAPI.h"
-#include "../../GlobalSettings.h"
 
-const physx::PxU32 RigidDynamicComponent::NUM_SHAPES = 1;
 const physx::PxReal RigidDynamicComponent::DENSITY = 1.0;
 const physx::PxReal RigidDynamicComponent::ANGULAR_DAMPING = 0.5;
 const physx::PxReal RigidDynamicComponent::LINEAR_DAMPING = 0.5;
@@ -13,22 +11,18 @@ RigidDynamicComponent::~RigidDynamicComponent() {
 
 void RigidDynamicComponent::fillWith(physx::PxPhysics* pxPhysics,
                                      physx::PxScene* pxScene,
-                                     physx::PxMaterial* material,
-                                     physx::PxSphereGeometry geometry,
+                                     physx::PxShape* shape,
                                      GameObject* gameObject)
 {
     m_gameObject = gameObject;
-    m_pxActor = PxCreateDynamic(*pxPhysics, gameObject->transform, geometry, *material, DENSITY);
+    m_pxShape = shape;
+    m_pxActor = PxCreateDynamic(*pxPhysics, gameObject->transform, *shape, DENSITY);
     // damping - friction or resistance, angular = rotation/spinning, linear = moving
     m_pxActor->setAngularDamping(ANGULAR_DAMPING);
     m_pxActor->setLinearDamping(LINEAR_DAMPING);
     m_pxActor->setLinearVelocity(physx::PxVec3(0,0,0));
     m_pxActor->userData = m_gameObject;
     pxScene->addActor(*m_pxActor);
-
-    physx::PxShape* pxShapeBuffer[NUM_SHAPES];
-    m_pxActor->getShapes(pxShapeBuffer, NUM_SHAPES);
-    m_pxShape = pxShapeBuffer[0];
 }
 
 void RigidDynamicComponent::fillWith(const RigidDynamicComponent& source) {
@@ -49,6 +43,7 @@ void RigidDynamicComponent::update(float dt) {
 
 void RigidDynamicComponent::reset(bool finalize) {
     if (finalize && m_pxActor != nullptr) {
+        m_pxActor->detachShape(*m_pxShape);
         m_pxActor->release();
     }
     m_gameObject = nullptr;

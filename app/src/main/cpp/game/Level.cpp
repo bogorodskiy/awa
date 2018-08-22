@@ -9,9 +9,9 @@ const std::vector<std::shared_ptr<PointLight>>& Level::getPointLights() const {
 }
 
 int Level::initializeLevel(GraphicsSystem& graphicsSystem, PhysicsSystem& physicsSystem, int lastFreeId) {
-    const auto levelWidth = 20.0f;
+    const auto levelWidth = 50.0f;
     const auto levelHeight = 10.0f;
-    const auto levelDepth = 30.0f;
+    const auto levelDepth = 150.0f;
     m_bounds.x = levelWidth;
     m_bounds.y = levelHeight;
     m_bounds.z = levelDepth;
